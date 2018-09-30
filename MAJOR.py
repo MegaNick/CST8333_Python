@@ -118,6 +118,7 @@ class FirstScreen:
 #        self.style.configure('Header.TLabel', font = ('Arial', 18, 'bold'))
         ttk.Label(master, text='CST8333_351 Final Project').place(x=130, y=63, width=170, height=31)
         ttk.Label(master, text='By Nikolay Melnik, student ID-040874855').place(x=91, y=84, width=250, height=31)
+        ttk.Label(master, text='Algonquin College. Ottawa, ON. December 2018').place(x=74, y=105, width=300, height=31)
 
 
 
