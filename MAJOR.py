@@ -3,7 +3,7 @@
 
 from abc import ABCMeta, abstractmethod
 from tkinter import *
-from tkinter import ttk
+from tkinter import ttk, filedialog
 from tkinter import messagebox
 
 Tunas = {}
@@ -108,32 +108,59 @@ class Tuna(TunaSkeleton):
 
 #First GUI Starter
 class FirstScreen:
-    def __init__(self, master):
 
+    def __init__(self, master):
+        self.master = master
+
+
+# First screen styling
         master.resizable(False, False) # Not resizable screen
         master.geometry('450x368+735+356')
         master.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
         self.style.configure('TLabel', font = ('Arial', 10))
-#        self.style.configure('Header.TLabel', font = ('Arial', 18, 'bold'))
-        ttk.Label(master, text='CST8333_351 Final Project').place(x=130, y=63, width=170, height=31)
-        ttk.Label(master, text='By Nikolay Melnik, student ID-040874855').place(x=91, y=84, width=250, height=31)
-        ttk.Label(master, text='Algonquin College. Ottawa, ON. December 2018').place(x=74, y=105, width=300, height=31)
+        self.style.configure('TButton', font=('Arial', 10))
 
+        # Labels placement
+        master.columnconfigure(0, weight=1)
+        ttk.Label(master, text='\n\n\nCST8333_351 Final Project').grid(row = 0, column = 0)
+        ttk.Label(master, text='by Nikolay Melnik, student ID-040874855').grid(row = 1, column = 0)
+        ttk.Label(master, text='Algonquin College. Ottawa, ON. December 2018\n\n\n\n').grid(row=2, column=0)
 
+        #Buttons placement
+        ttk.Button(master, text = ' Open and load .CSV file ', command=self.firstButton).grid(row=3, column=0, pady=5)
+        BDBOpen = ttk.Button(master, text = ' Load data from MySql database (if exists) ', command=self.secondButton).grid(row=4, column=0, pady=5)
+        BExit = ttk.Button(master, text=' Exit ', command=self.thirdButton).grid(row=5, column=0, pady=5)
 
+    def firstButton(self):
+        print('Button 1 pressed')
+        # Call filechooser
+        filename=filedialog.askopenfile(filetypes=(("Comma-separated files", "*.csv"),("All files", "*.*")))
+        if filename is None: return # Return if Cancel is pressed
+        print(filename.name)
+        try:
+            with open(filename.name) as f:
+                        print(f.readlines())
 
+        except IOError as error:
+            messagebox.showerror("FILE READING ERROR","There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
 
-  #      master.columnconfigure(0, weight=1)
-# ttk.Label(master,           text='\nCST8333_351 Final Project\nBy Nikolay Melnik, student ID-040874855\nAlgonquin College. Ottawa, ON. December 2018') \
-#     .place(x=580, y=183, width=170, height=21)
+    def secondButton(self):
+        print('Button 2 pressed')
+
+    def thirdButton(self):
+        self.master.destroy()
+        print('Button 3 pressed')
 
 
 ### Major function
 def main():
     root = Tk()
     # root.geometry('440x120+20+20')
-    gui = FirstScreen(root)
+    FirstScreen(root)
+
     root.mainloop()
 
 if __name__ == "__main__": main()
