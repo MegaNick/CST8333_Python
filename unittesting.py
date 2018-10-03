@@ -14,7 +14,7 @@ class TestTuna(unittest.TestCase):
 
     def testTuna(self):
         x = MAJOR.Tuna()
-        x.setTunaFeatures([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17])
+        x.setTunaFeatures([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
         y = x.getTunaFeatures()
         count = 1
         for z in y:
