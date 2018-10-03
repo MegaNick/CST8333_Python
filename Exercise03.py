@@ -1,15 +1,29 @@
 #CST8333_351_Exercise03 By Nikolay Melnik
 #
 
+"""
+Class animal created for demonstration of object creation and variable references
+"""
 class animal:
 
-    #Class variable is equal to 'static' variable in Java
-    animalClass = "live"
+    animalClass = "Life"
+    """
+    Class variable is ALMOST equal to 'static' variable in Java, however, it is NOT static. Holds example of Living Being Class (Taxonomy)
+    https://en.wikipedia.org/wiki/Taxonomy_(biology)
+    """
 
     def __init__(self, genus = ""):
+        """
+        Constructor. Saves Genus into variable genus
+        :param genus: holds Genus of the object. For example, Feline, Canine, Equine etc
+        """
         self.genus = genus
 
     def genusPrint(self):
+        """
+        Methods prints genus variable into console
+        :return: None
+        """
         print(self.genus)
 
 
@@ -101,21 +115,50 @@ print('5. Arithmetics by Nikolay Melnik')
 
 #Supportive class calculator perfomrms arithmetics
 class calc:
+    """
+    Supporting Class t=for arithmetic demonstration. Has methods of 4 basic arithmetic functions: + - * /
+    """
 
     def addition(self, a, b):
+        """
+        Method Calculates sum of 1st and 2nd parameters
+        :param a: 1st parameter
+        :param b: 2nd parameter
+        :return: sum of parameters
+        """
         return a+b
 
     def subtraction(self, a, b):
+        """
+        Method Calculates difference between 1st and 2nd parameters
+        :param a: 1st parameter
+        :param b: 2nd parameter
+        :return: difference of the parameters
+        """
         return a-b
 
     def multiplication(self, a, b):
+        """
+        Method Calculates product of 1st and 2nd parameters
+        :param a: 1st parameter
+        :param b: 2nd parameter
+        :return: product of the parameters
+        """
         return a*b
 
     def division(self, a, b):
+        """
+         Method Calculates quotient of 1st and 2nd parameters. If 2nd parameter is 0 returns String - 'Division by 0 prohibited!'
+         :param a: 1st parameter
+         :param b: 2nd parameter
+         :return: quotient of the parameters. If 2nd parameter is 0 returns String - 'Division by 0 prohibited!'
+         """
         if b == 0:
             return 'Division by 0 prohibited!'
         else:
             return a/b
+
+
 a = int(input('Please enter first number for calculation-'))
 b = int(input('Please enter second number for calculation-'))
 c = calc()
@@ -150,6 +193,7 @@ if a >= b:
 #less or equal
 if a <= b:
     print('a less or equal to b')
+print('**************************')
 
 #7 Logic operators
 print('Logic operators by Nikolay Melnik')
@@ -162,6 +206,7 @@ while(count < 20):
     if count > 2 and count < 8 or count ==15:
         print(count, ' ', end='')
     count = count + 1
+print('\n**************************')
 
 #8 Memory Management
 # "Python's memory allocation and deallocation method is automatic.
