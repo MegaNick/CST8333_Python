@@ -9,7 +9,7 @@ class Tuna():
     value = ""
 
 
-class main ():
+def main ():
     print("Test classs!!!")
     list = []
     setset = set(list)
@@ -19,10 +19,35 @@ class main ():
         x = Tuna(count, "Test", "Test")
         list.append(x)
 
-
-
     for x in setset:
         print(x.id, x.name, x.value)
+
+    a = ["apple", 'banana', 'orange']
+    print(a)
+
+    b = {'fruit': 'apple', 'fruit': 'orange', 'vegetable': 'potato', 'vegetable': 'tomato'}
+    print(b.items())
+    print(b.get('fruit'))
+
+    c = {}
+    def insertDic(key, word):
+        temp = c.get(key)
+        if temp == None:
+            c.update({key: [word]})
+        else:
+            temp.append(word)
+            c.update({key: temp})
+
+    insertDic('car', 'red')
+    insertDic('car', 'blue')
+    insertDic('fruit', 'apple')
+    insertDic('fruit', 'orange')
+    insertDic('vegetable', 'potato')
+    insertDic('vegetable', 'tomato')
+    insertDic('vegetable', 'cucumber')
+
+    print(c)
+
 
 
 

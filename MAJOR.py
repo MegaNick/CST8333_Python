@@ -7,7 +7,7 @@ from tkinter import ttk, filedialog
 from tkinter import messagebox
 
 
-Tunas = []
+
 
 class TunaSkeleton(metaclass=ABCMeta):
     """
@@ -104,6 +104,10 @@ class Tuna(TunaSkeleton):
              self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS]
         return x
 
+
+Tunas = []
+tunasHeader = Tuna()
+
 #First GUI Starter
 class FirstScreen:
 
@@ -136,6 +140,7 @@ class FirstScreen:
         filename=filedialog.askopenfile(filetypes=(("Comma-separated files", "*.csv"),("All files", "*.*")))
         if filename is None: return # Return if Cancel is pressed
         print(filename.name)
+
         try:
             with open(filename.name) as f:
                 count = 0
@@ -165,18 +170,20 @@ class FirstScreen:
                     count=count+1
 
                     #Create Tuna object
+                    global Tunas
                     tuna = Tuna()
                     tuna.setTunaFeatures(b)
                     Tunas.append(tuna)
-
-                # line = f.readline()
-                # for row in line:
-                #     print(row)
 
         except IOError as error:
             messagebox.showerror("FILE READING ERROR","There was an ERROR during loading\nPlease press OK and repeat loading")
             return
         messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        tunasHeader = Tunas[0]
+        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
+        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        Tunas = sorted(Tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        print('end sorting')
 
     def secondButton(self):
         print('Button 2 pressed')
