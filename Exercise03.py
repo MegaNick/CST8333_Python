@@ -74,7 +74,7 @@ class calc:
         else:
             return a/b
 def main():
-    #1. Variable declaration
+    #1. Variable declaration  by Nikolay Melnik
     print('1. Variable declaration by Nikolay Melnik')
     a = 10 #Variable a = 1 assignment 1 to variable a
     b = 2 #Variable b = 2 assignment 2 to variable b
@@ -88,7 +88,7 @@ def main():
     print(a+b) # "Adding" - concatenating Strings
     print('**************************')
 
-    #2. Primitives vs references
+    #2. Primitives vs references by Nikolay Melnik
     #All "primitives" in Python are objects. They have methods!
     print('2. Primitives vs references by Nikolay Melnik')
     a = 14 #int 14
@@ -119,7 +119,7 @@ def main():
     print('Printing class variable animalClass from Cat variable b-', b.animalClass)
     print('**************************')
 
-    #3 Decision structures
+    #3 Decision structures by Nikolay Melnik
     print('3. Decision Structures by Nikolay Melnik')
     #Entering Numbers for compare
     a = int(input('Please enter first number-'))
@@ -214,7 +214,7 @@ def main():
         count = count + 1
     print('\n**************************')
 
-    #8 Memory Management
+    #8 Memory Management  by Nikolay Melnik
     # Python's memory allocation and deallocation manipulations are automatic.
     # The user does not have to allocate or deallocate memory manually because it happens automatically inside the Python language system.
     # Python is using automatic garbage collection of unused objects opposed to the manual collection as it happens, for example, in languages such as C or C++.
