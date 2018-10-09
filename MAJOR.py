@@ -115,6 +115,9 @@ class Data:
     tunasHeader = Tuna()
     analyzedTunasLitres = {}
     analyzedTunasKilos = {}
+    currentUOM = ""
+    currentData = {}
+    currentKey = ""
 
 
 # Second GUI Starter
@@ -125,24 +128,60 @@ class SecondScreen:
         for x in Data.tunas:
             # Skip adjusted for losses food. Shouldn't be too complicated
             # Another thing is eliminating repetition
-            if x.FOODCATEGORIES == 'Food available adjusted for losses':
+            try:
+
+                if x.FOODCATEGORIES == 'Food available adjusted for losses':
+                    continue
+                if x.UOM == 'Litres per person, per year':
+                    key = x.COMMODITY
+                    temp = Data.analyzedTunasLitres.get(key)
+                    if temp is None:
+                        Data.analyzedTunasLitres.update({key: {int(x.REF_DATE): float(x.VALUE)}})
+                    else:
+                        temp.update({int(x.REF_DATE): float(x.VALUE)})
+                        Data.analyzedTunasLitres.update({key: temp})
+                elif x.UOM == 'Kilograms per person, per year':
+                    key = x.COMMODITY
+                    temp = Data.analyzedTunasKilos.get(key)
+                    if temp is None:
+                        Data.analyzedTunasKilos.update({key: {int(x.REF_DATE): float(x.VALUE)}})
+                    else:
+                        temp.update({int(x.REF_DATE): float(x.VALUE)})
+                        Data.analyzedTunasKilos.update({key: temp})
+            except ValueError as error:
                 continue
-            if x.UOM == '"Litres per person, per year"':
-                key = x.COMMODITY
-                temp = Data.analyzedTunasLitres.get(key)
-                if temp is None:
-                    Data.analyzedTunasLitres.update({key: {int(x.REF_DATE): float(x.VALUE)}})
-                else:
-                    temp.update({int(x.REF_DATE): float(x.VALUE)})
-                    Data.analyzedTunasLitres.update({key: temp})
-            elif x.UOM == '"Kilograms per person, per year"':
-                key = x.COMMODITY
-                temp = Data.analyzedTunasKilos.get(key)
-                if temp is None:
-                    Data.analyzedTunasKilos.update({key: {int(x.REF_DATE): float(x.VALUE)}})
-                else:
-                    temp.update({int(x.REF_DATE): float(x.VALUE)})
-                    Data.analyzedTunasKilos.update({key: temp})
+    #printing graph data
+    def printGraph(self, master):
+
+        # Grid Graphic forgetter
+        # Taken from here https://stackoverflow.com/questions/23189610/remove-widgets-from-grid-in-tkinter
+        for label in self.frame_top.grid_slaves():
+            if int(label.grid_info()["row"]) == 1:
+                label.grid_forget()
+
+        # Data for plotting
+        # Taken from https://matplotlib.org/gallery/lines_bars_and_markers/simple_plot.html#sphx-glr-gallery-lines-bars-and-markers-simple-plot-py
+        z = Data.currentData.get(Data.currentKey)
+        x = []
+        #Years to observe
+        for y in range(1960, 2017):
+            k = z.get(y)
+            if k is None:
+                x.append(0)
+            else:
+                x.append(k)
+
+        t = np.arange(1960, 2017, 1)
+        fig, ax = plt.subplots()
+        fig.set_dpi(80)
+        fig.set_figwidth(13)
+        ax.plot(t, x)
+        ax.set(xlabel='YEAR', ylabel=Data.currentUOM,
+               title='Availability variation 1960-2017')
+        ax.grid()
+        canvas = FigureCanvasTkAgg(fig, master)
+        canvas.draw()
+        canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
 
     def __init__(self):
         root = Tk()
@@ -154,57 +193,159 @@ class SecondScreen:
         root.geometry('1500x828+50+50')
         root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
-        self.style.configure('TLabel', font=('Arial', 10))
+        self.style.configure('TLabel', font=('Arial', 12))
         self.style.configure('TButton', font=('Arial', 10))
 
         # Forming Top Frame
         self.frame_top = ttk.Frame(root)
         self.frame_top.pack()
-        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0)
 
-        # Data for plotting
-        # Taken from https://matplotlib.org/gallery/lines_bars_and_markers/simple_plot.html#sphx-glr-gallery-lines-bars-and-markers-simple-plot-py
-        z = Data.analyzedTunasLitres.get('Apple juice')
-        x = []
-        #Years to observe
-        for y in range(1960, 2017):
-            x.append(z.get(y))
-                    #
-                    # t = np.arange(1960, 2017, 1)
-                    # f = Figure(figsize=(50, 5), dpi=50)
-                    # a = f.add_subplot(111)
-                    # a.plot(t, x)
+        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0, columnspan=4, pady=5)
+        ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=2, column=0, columnspan=4, pady=10)
+        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=3, column=2, sticky="w",pady=10)
+        ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=3, column=0, sticky="w", pady=10)
 
-        t = np.arange(1960, 2017, 1)
-        s = 1 + np.sin(2 * np.pi * t)
+        #Default values for boxes
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
 
-        # fig = Figure(figsize=(5, 5), dpi=50)
-        fig, ax = plt.subplots()
-        fig.set_dpi(80)
-        fig.set_figwidth(13)
+        #Callback method for UOM box
+        def changeUOM(event):
 
-        ax.plot(t, x)
+            Data.currentUOM = self.choice.get()
+            if self.choice.get() == 'Litres per person, per year':
+                Data.currentData = Data.analyzedTunasLitres
+                self.keysList = list(Data.currentData.keys())
+                self.comm['values'] = self.keysList
+                self.comm.current(0)
+                #Refresh Graph
+                Data.currentKey = self.comm.get()
+                self.printGraph(self.frame_top)
 
-        ax.set(xlabel='YEAR', ylabel='Liters per person per year',
-               title='Price variation 1960-2017')
-        ax.grid()
+            elif self.choice.get() == 'Kilograms per person, per year':
+                Data.currentData = Data.analyzedTunasKilos
+                self.keysList = list(Data.currentData.keys())
+                self.comm['values'] = self.keysList
+                self.comm.current(0)
+                #Refresh Graph
+                Data.currentKey = self.comm.get()
+                self.printGraph(self.frame_top)
 
-        canvas = FigureCanvasTkAgg(fig, self.frame_top)
-        canvas.draw()
-        canvas.get_tk_widget().grid(row=1, column=0, columnspan=2)
-        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=2, column=0, sticky="w")
-
-    # https://www.programcreek.com/python/example/104110/tkinter.ttk.Combobox
+        #combo box change UOM
+        # https://www.programcreek.com/python/example/104110/tkinter.ttk.Combobox
         # https://stackoverflow.com/questions/6876518/set-a-default-value-for-a-ttk-combobox
-        keysList = list(Data.analyzedTunasLitres.keys())
-        self.countryvar = StringVar()
-        keepvalue = self.countryvar.get()
-        self.country = ttk.Combobox(self.frame_top, textvariable=keepvalue, width=60, values=keysList)
-        self.country.state(['readonly'])
-        self.country.current(0)
-        self.country.grid(row=2, column=1, sticky="w")
-        x= list(Data.analyzedTunasLitres.keys())
-        a=x
+        choice_box = StringVar()
+        keepvalue2 = choice_box.get()
+        self.choice = ttk.Combobox(self.frame_top, textvariable=keepvalue2, width=30,
+                                   values=['Litres per person, per year', 'Kilograms per person, per year'])
+        self.choice.state(['readonly'])
+        self.choice.bind('<<ComboboxSelected>>', changeUOM)
+        self.choice.current(0)
+        self.choice.grid(row=3, column=1, sticky="w", pady=10)
+
+        Data.currentKey = self.keysList[0]
+        self.printGraph(self.frame_top)
+
+
+        #Callback method for Commodity box
+        def changeComm(event):
+            Data.currentKey = self.comm.get()
+            print(self.comm.get())
+            self.printGraph(self.frame_top)
+
+        commvar = StringVar()
+        keepvalue2 = commvar.get()
+        self.comm = ttk.Combobox(self.frame_top, textvariable=keepvalue2, width=60, values=self.keysList)
+        self.comm.state(['readonly'])
+        self.comm.bind('<<ComboboxSelected>>', changeComm)
+        self.comm.current(0)
+        self.comm.grid(row=3, column=3, sticky="w")
+        # x= list(Data.analyzedTunasLitres.keys())
+
+    #Second Part of the screen, 2nd frame Constructing
+        # Forming Top Frame
+        self.frame_bottom1 = ttk.Frame(root)
+        self.frame_bottom1.pack()
+        self.frame_bottom2 = ttk.Frame(root)
+        self.frame_bottom2.pack(anchor=W)
+        self.frame_bottom3 = ttk.Frame(root)
+        self.frame_bottom3.pack(anchor=W)
+        self.frame_bottom4 = ttk.Frame(root)
+        self.frame_bottom4.pack(anchor=W)
+        self.frame_bottom5 = ttk.Frame(root)
+        self.frame_bottom5.pack(anchor=W)
+
+
+
+
+        # #Packing stuff
+        #Packing stuff
+        ######## Here is 1st line
+        ttk.Label(self.frame_bottom1, text='Table View').pack()
+        ttk.Label(self.frame_bottom2, text='                    REF_DATE(1960-2017):').pack(side=LEFT, pady=5)
+        self.en_refDate = ttk.Entry(self.frame_bottom2, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom2, text='   DGUID: 2016A000011124').pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom2, text='    Food Categories: ').pack(side=LEFT, pady=5)
+        #Food Categories Combo box
+        fcat = StringVar()
+        foodcat = fcat.get()
+        self.food_avail = ttk.Combobox(self.frame_bottom2, textvariable=foodcat, width=35, values=['Food available', 'Food available adjusted for losses'])
+        self.food_avail.state(['readonly'])
+        #### self.comm.bind('<<ComboboxSelected>>', changeComm)
+        self.food_avail.current(0)
+        self.food_avail.pack(side=LEFT, pady=5)
+
+        ttk.Label(self.frame_bottom2, text='    Commodity: ').pack(side=LEFT, pady=5)
+        self.en_commodity = ttk.Entry(self.frame_bottom2, width=60).pack(side=LEFT, pady=5)
+
+        ######## Here is 2nd line
+        ttk.Label(self.frame_bottom3, text='                    UOM: ').pack(side=LEFT, pady=5)
+        #UOM Categories Combo box
+        fuom = StringVar()
+        uomlist = fuom.get()
+        self.uom_sel = ttk.Combobox(self.frame_bottom3, textvariable=uomlist, width=35, values=['Litres per person, per year', 'Kilograms per person, per year'])
+        self.uom_sel.state(['readonly'])
+        #### self.comm.bind('<<ComboboxSelected>>', changeComm)
+        self.uom_sel.current(0)
+        self.uom_sel.pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom3, text='   UOM_ID: ').pack(side=LEFT, pady=5)
+        self.en_uomid = ttk.Entry(self.frame_bottom3, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom3, text='   SCALAR_FACTOR: ').pack(side=LEFT, pady=5)
+        #Scalar Factor Combo box
+        fscal = StringVar()
+        scallist = fscal.get()
+        self.scal_sel = ttk.Combobox(self.frame_bottom3, textvariable=scallist, width=10, values=['Units', 'Thousands'])
+        self.scal_sel.state(['readonly'])
+        #### self.comm.bind('<<ComboboxSelected>>', changeComm)
+        self.scal_sel.current(0)
+        self.scal_sel.pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom3, text='   SCALAR_ID: ').pack(side=LEFT, pady=5)
+        self.en_scalarid = ttk.Entry(self.frame_bottom3, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom3, text='   VECTOR: ').pack(side=LEFT, pady=5)
+        self.en_vector = ttk.Entry(self.frame_bottom3, width=10).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom3, text='   COORDINATE: ').pack(side=LEFT, pady=5)
+        self.en_coordinate = ttk.Entry(self.frame_bottom3, width=10).pack(side=LEFT, pady=5)
+
+        ######## Here is 3rd line
+        ttk.Label(self.frame_bottom4, text='                    VALUE: ').pack(side=LEFT, pady=5)
+        self.en_value = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom4, text='   STATUS: ').pack(side=LEFT, pady=5)
+        self.en_status = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom4, text='   SYMBOL: ').pack(side=LEFT, pady=5)
+        self.en_symbol = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom4, text='   TERMINATED: ').pack(side=LEFT, pady=5)
+        self.terminated = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        ttk.Label(self.frame_bottom4, text='   DECIMALS: ').pack(side=LEFT, pady=5)
+        self.decimals = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+
+        ### Buttons
+        ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
+        buttonCreate = ttk.Button(self.frame_bottom5, text="Create New Entry").pack(side=LEFT, pady=5, padx=10)
+        buttonUpdate = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
+        buttonDelete = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
+
+
 
 # First GUI Starter
 class FirstScreen:
@@ -253,10 +394,16 @@ class FirstScreen:
                                 continue
                         elif x >= '\x80':
                             continue
+                        elif x == '"':
+                            continue
                         a = a + x
 
                     # a is clean, do split
-                    b = a.split('\t')
+                    b = a.split(',')
+
+                    if count > 0:
+                        b[5] = b[5] + ',' + b[6]
+                        b.pop(6)
 
                     # if a contains 16 elements, we are good, if not, do next
                     if len(b) != 16:
@@ -267,7 +414,6 @@ class FirstScreen:
                         if (b[1] != 'GEO') or (b[2] != 'DGUID'):
                             raise IOError("Data set is corrupted or not specified")
                     count = count + 1
-
                     # Create Tuna object
                     tuna = Tuna()
                     tuna.setTunaFeatures(b)
@@ -300,7 +446,7 @@ class FirstScreen:
 ### Major function
 def main():
     root = Tk()
-    # root.geometry('440x120+20+20')
+    plt.rcParams.update({'figure.max_open_warning': 0}) #Blocking Matplotlib Warnings as per https://github.com/clawpack/visclaw/issues/75
     FirstScreen(root)
 
     root.mainloop()
