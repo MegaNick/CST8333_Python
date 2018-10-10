@@ -5,13 +5,12 @@ from abc import ABCMeta, abstractmethod
 from tkinter import *
 from tkinter import ttk, filedialog
 from tkinter import messagebox
+from tkinter.font import Font
 
-import matplotlib
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.figure import Figure
-
 
 class TunaSkeleton(metaclass=ABCMeta):
     """
@@ -33,6 +32,14 @@ class TunaSkeleton(metaclass=ABCMeta):
         Returns all the fields of Tuna object as an array
         :return: [16] - fields of Tuna object
         """
+        pass
+
+    @abstractmethod
+    def getTunaTuple(self):
+        """
+         Returns all the fields of Tuna object as Tuple
+         :return: (16) - fields of Tuna object
+         """
         pass
 
 
@@ -102,11 +109,21 @@ class Tuna(TunaSkeleton):
     def getTunaFeatures(self):
         """
         The method returns all the fields of the Tuna object as an array of strings
-        :return: array [17] - fields
+        :return: array [16] - fields
         """
         x = [self.REF_DATE, self.GEO, self.DGUID, self.FOODCATEGORIES, self.COMMODITY, self.UOM, self.UOM_ID,
              self.SCALAR_FACTOR, self.SCALAR_ID, self.VECTOR,
              self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS]
+        return x
+
+    def getTunaTuple(self):
+        """
+        The method returns all the fields of the Tuna object as a Tuple of Strings
+        :return: Tuple [16] - fields
+        """
+        x = tuple((self.REF_DATE, self.GEO, self.DGUID, self.FOODCATEGORIES, self.COMMODITY, self.UOM, self.UOM_ID,
+             self.SCALAR_FACTOR, self.SCALAR_ID, self.VECTOR,
+             self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS))
         return x
 
 
@@ -183,6 +200,95 @@ class SecondScreen:
         canvas.draw()
         canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
 
+    def list_panel(self, mf):
+
+        demoPanel = Frame(mf)
+        demoPanel.pack(side=TOP, fill=BOTH, expand=Y)
+
+        self._create_treeview(demoPanel)
+        self._load_data()
+
+    ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+    def _create_treeview(self, parent):
+        """
+        This
+        :param parent:
+        :return:
+        """
+        f = ttk.Frame(parent)
+        f.pack(side=TOP, fill=BOTH, expand=Y)
+
+        # create the tree and scrollbars
+        self.dataCols = ('REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM',
+                         'UOM_ID', 'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED', 'DECIMALS')
+        self.tree = ttk.Treeview(columns=self.dataCols,
+                                 show='headings')
+
+        ysb = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
+        xsb = ttk.Scrollbar(orient=HORIZONTAL, command=self.tree.xview)
+        self.tree['yscroll'] = ysb.set
+        self.tree['xscroll'] = xsb.set
+
+        # add tree and scrollbars to frame
+        self.tree.grid(in_=f, row=0, column=0, sticky=NSEW)
+        ysb.grid(in_=f, row=0, column=1, sticky=NS)
+        xsb.grid(in_=f, row=1, column=0, sticky=EW)
+
+        # set frame resize priorities
+        f.rowconfigure(0, weight=1)
+        f.columnconfigure(0, weight=1)
+
+        self.tree.bind("<ButtonRelease-1>", self.OnDoubleClick)
+
+    def OnDoubleClick(self, event):
+        curItem = self.tree.focus()
+        print(self.tree.item(curItem))
+        print("iid x-", self.tree.focus())
+
+    def _load_data(self):
+
+        self.data = []
+        for x in Data.tunas:
+            y = x.getTunaTuple()
+            self.data.append(x.getTunaTuple())
+
+        # configure column headings
+        for c in self.dataCols:
+            self.tree.heading(c, text=c.title()) #, command=lambda c=c: self._column_sort(c, MCListDemo.SortDir)
+            self.tree.column(c, width=Font().measure(c.title()))
+
+        # Add counter
+        count = 0
+        # add data to the tree
+        for item in self.data:
+            self.tree.insert('', 'end', iid=count, values=item)
+            count = count + 1
+
+            # and adjust column widths if necessary
+            for idx, val in enumerate(item):
+                iwidth = Font().measure(val)
+                if self.tree.column(self.dataCols[idx], 'width') < iwidth:
+                    self.tree.column(self.dataCols[idx], width=iwidth)
+    ####### End of Tree view
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def __init__(self):
         root = Tk()
         # self.master = master
@@ -190,7 +296,7 @@ class SecondScreen:
         # Second screen styling
         self.analyzeTuna()
         root.resizable(False, False)  # Not resizable screen
-        root.geometry('1500x828+50+50')
+        root.geometry('1500x1000+150+0')
         root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
         self.style.configure('TLabel', font=('Arial', 12))
@@ -276,9 +382,6 @@ class SecondScreen:
         self.frame_bottom5 = ttk.Frame(root)
         self.frame_bottom5.pack(anchor=W)
 
-
-
-
         # #Packing stuff
         #Packing stuff
         ######## Here is 1st line
@@ -345,7 +448,7 @@ class SecondScreen:
         buttonUpdate = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
         buttonDelete = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
 
-
+        self.list_panel(self.frame_bottom1)
 
 # First GUI Starter
 class FirstScreen:
