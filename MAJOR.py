@@ -200,15 +200,15 @@ class SecondScreen:
         canvas.draw()
         canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
 
+    ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+    ### Adjusted fot This final project
     def list_panel(self, mf):
 
         demoPanel = Frame(mf)
         demoPanel.pack(side=TOP, fill=BOTH, expand=Y)
-
         self._create_treeview(demoPanel)
         self._load_data()
 
-    ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     def _create_treeview(self, parent):
         """
         This
@@ -219,10 +219,11 @@ class SecondScreen:
         f.pack(side=TOP, fill=BOTH, expand=Y)
 
         # create the tree and scrollbars
-        self.dataCols = ('REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM',
-                         'UOM_ID', 'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED', 'DECIMALS')
-        self.tree = ttk.Treeview(columns=self.dataCols,
-                                 show='headings')
+        self.dataCols = ('REF_DATE', 'GEO       ', 'DGUID               ', 'FOODCATEGORIES                    ',
+                         'COMMODITY                               ',
+                         'UOM                                    ', 'UOM_ID', 'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR      ',
+                         'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED', 'DECIMALS')
+        self.tree = ttk.Treeview(columns=self.dataCols, show='headings')
 
         ysb = ttk.Scrollbar(orient=VERTICAL, command=self.tree.yview)
         xsb = ttk.Scrollbar(orient=HORIZONTAL, command=self.tree.xview)
@@ -230,7 +231,7 @@ class SecondScreen:
         self.tree['xscroll'] = xsb.set
 
         # add tree and scrollbars to frame
-        self.tree.grid(in_=f, row=0, column=0, sticky=NSEW)
+        self.tree.grid(in_=f, row=0, column=0, sticky=NSEW, padx=5)
         ysb.grid(in_=f, row=0, column=1, sticky=NS)
         xsb.grid(in_=f, row=1, column=0, sticky=EW)
 
@@ -242,8 +243,37 @@ class SecondScreen:
 
     def OnDoubleClick(self, event):
         curItem = self.tree.focus()
-        print(self.tree.item(curItem))
-        print("iid x-", self.tree.focus())
+        #print(self.tree.item(curItem))
+        print("iid x-", curItem)
+        #Transfer commodities
+        x = self.tree.item(curItem).get('values')
+        print(x)
+        #Get RefDate
+        # self.en_refDate.delete(0, END)
+        # self.en_refDate.insert(0, "a default value")
+        self.en_refDate.set(x[0])
+        if x[3] == 'Food available':
+            self.food_avail.current(0)
+        else:
+            self.food_avail.current(1)
+        self.en_commodity.set(x[4])
+        if x[5] == 'Litres per person, per year':
+            self.uom_sel.current(0)
+        else:
+            self.uom_sel.current(1)
+        self.en_uomid.set(x[6])
+        if x[7] == 'units ':
+            self.scal_sel.current(0)
+        else:
+            self.scal_sel.current(1)
+        self.en_scalarid.set(x[8])
+        self.en_vector.set(x[9])
+        self.en_coordinate.set(x[10])
+        self.en_value.set(x[11])
+        self.en_status.set(x[12])
+        self.en_symbol.set(x[13])
+
+
 
     def _load_data(self):
 
@@ -263,12 +293,6 @@ class SecondScreen:
         for item in self.data:
             self.tree.insert('', 'end', iid=count, values=item)
             count = count + 1
-
-            # and adjust column widths if necessary
-            for idx, val in enumerate(item):
-                iwidth = Font().measure(val)
-                if self.tree.column(self.dataCols[idx], 'width') < iwidth:
-                    self.tree.column(self.dataCols[idx], width=iwidth)
     ####### End of Tree view
 
 
@@ -387,7 +411,10 @@ class SecondScreen:
         ######## Here is 1st line
         ttk.Label(self.frame_bottom1, text='Table View').pack()
         ttk.Label(self.frame_bottom2, text='                    REF_DATE(1960-2017):').pack(side=LEFT, pady=5)
-        self.en_refDate = ttk.Entry(self.frame_bottom2, width=5).pack(side=LEFT, pady=5)
+
+        self.en_refDate = StringVar()
+        ttk.Entry(self.frame_bottom2, textvariable=self.en_refDate, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom2, text='   DGUID: 2016A000011124').pack(side=LEFT, pady=5)
         ttk.Label(self.frame_bottom2, text='    Food Categories: ').pack(side=LEFT, pady=5)
         #Food Categories Combo box
@@ -400,7 +427,8 @@ class SecondScreen:
         self.food_avail.pack(side=LEFT, pady=5)
 
         ttk.Label(self.frame_bottom2, text='    Commodity: ').pack(side=LEFT, pady=5)
-        self.en_commodity = ttk.Entry(self.frame_bottom2, width=60).pack(side=LEFT, pady=5)
+        self.en_commodity = StringVar()
+        ttk.Entry(self.frame_bottom2, textvariable=self.en_commodity, width=60).pack(side=LEFT, pady=5)
 
         ######## Here is 2nd line
         ttk.Label(self.frame_bottom3, text='                    UOM: ').pack(side=LEFT, pady=5)
@@ -412,8 +440,11 @@ class SecondScreen:
         #### self.comm.bind('<<ComboboxSelected>>', changeComm)
         self.uom_sel.current(0)
         self.uom_sel.pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom3, text='   UOM_ID: ').pack(side=LEFT, pady=5)
-        self.en_uomid = ttk.Entry(self.frame_bottom3, width=5).pack(side=LEFT, pady=5)
+        self.en_uomid = StringVar()
+        ttk.Entry(self.frame_bottom3, textvariable=self.en_uomid, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom3, text='   SCALAR_FACTOR: ').pack(side=LEFT, pady=5)
         #Scalar Factor Combo box
         fscal = StringVar()
@@ -423,20 +454,32 @@ class SecondScreen:
         #### self.comm.bind('<<ComboboxSelected>>', changeComm)
         self.scal_sel.current(0)
         self.scal_sel.pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom3, text='   SCALAR_ID: ').pack(side=LEFT, pady=5)
-        self.en_scalarid = ttk.Entry(self.frame_bottom3, width=5).pack(side=LEFT, pady=5)
+        self.en_scalarid = StringVar()
+        ttk.Entry(self.frame_bottom3, textvariable=self.en_scalarid, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom3, text='   VECTOR: ').pack(side=LEFT, pady=5)
-        self.en_vector = ttk.Entry(self.frame_bottom3, width=10).pack(side=LEFT, pady=5)
+        self.en_vector = StringVar()
+        ttk.Entry(self.frame_bottom3, textvariable=self.en_vector, width=10).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom3, text='   COORDINATE: ').pack(side=LEFT, pady=5)
-        self.en_coordinate = ttk.Entry(self.frame_bottom3, width=10).pack(side=LEFT, pady=5)
+        self.en_coordinate = StringVar()
+        ttk.Entry(self.frame_bottom3, textvariable=self.en_coordinate, width=10).pack(side=LEFT, pady=5)
 
         ######## Here is 3rd line
         ttk.Label(self.frame_bottom4, text='                    VALUE: ').pack(side=LEFT, pady=5)
-        self.en_value = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        self.en_value = StringVar()
+        ttk.Entry(self.frame_bottom4,  textvariable= self.en_value, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom4, text='   STATUS: ').pack(side=LEFT, pady=5)
-        self.en_status = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        self.en_status = StringVar()
+        ttk.Entry(self.frame_bottom4, textvariable=self.en_status, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom4, text='   SYMBOL: ').pack(side=LEFT, pady=5)
-        self.en_symbol = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        self.en_symbol = StringVar()
+        ttk.Entry(self.frame_bottom4, textvariable=self.en_symbol, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom4, text='   TERMINATED: ').pack(side=LEFT, pady=5)
         self.terminated = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
         ttk.Label(self.frame_bottom4, text='   DECIMALS: ').pack(side=LEFT, pady=5)
