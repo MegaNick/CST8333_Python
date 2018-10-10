@@ -255,7 +255,7 @@ class SecondScreen:
         x = self.tree.item(curItem).get('values')
         #print(x)
         #Avoid wrong x type
-        if type(x) is not dict:
+        if type(x) is not list:
             return
         self.en_refDate.set(x[0])
         if x[3] == 'Food available':
