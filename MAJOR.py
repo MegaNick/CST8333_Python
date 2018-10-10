@@ -139,6 +139,12 @@ class Data:
 
 # Second GUI Starter
 class SecondScreen:
+    # Variable for sorting
+    # class variable to track direction of column
+    # header sort
+    SortDir = True  # descending
+
+
 
     # CSV array analyzer
     def analyzeTuna(self):
@@ -243,14 +249,14 @@ class SecondScreen:
 
     def OnDoubleClick(self, event):
         curItem = self.tree.focus()
-        #print(self.tree.item(curItem))
+        print(self.tree.item(curItem))
         print("iid x-", curItem)
         #Transfer commodities
         x = self.tree.item(curItem).get('values')
-        print(x)
-        #Get RefDate
-        # self.en_refDate.delete(0, END)
-        # self.en_refDate.insert(0, "a default value")
+        #print(x)
+        #Avoid wrong x type
+        if type(x) is not dict:
+            return
         self.en_refDate.set(x[0])
         if x[3] == 'Food available':
             self.food_avail.current(0)
@@ -272,8 +278,8 @@ class SecondScreen:
         self.en_value.set(x[11])
         self.en_status.set(x[12])
         self.en_symbol.set(x[13])
-
-
+        self.en_terminated.set(x[14])
+        self.en_decimals.set(x[15])
 
     def _load_data(self):
 
@@ -284,7 +290,7 @@ class SecondScreen:
 
         # configure column headings
         for c in self.dataCols:
-            self.tree.heading(c, text=c.title()) #, command=lambda c=c: self._column_sort(c, MCListDemo.SortDir)
+            self.tree.heading(c, text=c.title(), command=lambda c=c: self._column_sort(c, SecondScreen.SortDir))
             self.tree.column(c, width=Font().measure(c.title()))
 
         # Add counter
@@ -293,6 +299,23 @@ class SecondScreen:
         for item in self.data:
             self.tree.insert('', 'end', iid=count, values=item)
             count = count + 1
+
+    def _column_sort(self, col, descending=False):
+
+        # grab values to sort as a list of tuples (column value, column id)
+        # e.g. [('Apple juice', 'I001'), ('Apple pie filling', 'I002'), ('Apple sauce', 'I003')]
+        data = [(self.tree.set(child, col), child) for child in self.tree.get_children('')]
+
+        # reorder data
+        # tkinter looks after moving other items in
+        # the same row
+        data.sort(reverse=descending)
+        for indx, item in enumerate(data):
+            self.tree.move(item[1], '', indx)  # item[1] = item Identifier
+
+        # reverse sort direction for next sort operation
+        SecondScreen.SortDir = not descending
+
     ####### End of Tree view
 
 
@@ -481,9 +504,12 @@ class SecondScreen:
         ttk.Entry(self.frame_bottom4, textvariable=self.en_symbol, width=5).pack(side=LEFT, pady=5)
 
         ttk.Label(self.frame_bottom4, text='   TERMINATED: ').pack(side=LEFT, pady=5)
-        self.terminated = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        self.en_terminated = StringVar()
+        ttk.Entry(self.frame_bottom4, textvariable=self.en_terminated, width=5).pack(side=LEFT, pady=5)
+
         ttk.Label(self.frame_bottom4, text='   DECIMALS: ').pack(side=LEFT, pady=5)
-        self.decimals = ttk.Entry(self.frame_bottom4, width=5).pack(side=LEFT, pady=5)
+        self.en_decimals = StringVar()
+        ttk.Entry(self.frame_bottom4, textvariable=self.en_decimals, width=5).pack(side=LEFT, pady=5)
 
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
