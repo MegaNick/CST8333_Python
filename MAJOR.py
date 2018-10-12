@@ -276,7 +276,6 @@ class SecondScreen:
             # Skip adjusted for losses food. Shouldn't be too complicated
             # Another thing is eliminating repetition
             try:
-
                 if x.FOODCATEGORIES == 'Food available adjusted for losses':
                     continue
                 if x.UOM == 'Litres per person, per year':
@@ -312,11 +311,14 @@ class SecondScreen:
         x = []
         #Years to observe
         for y in range(1960, 2017):
-            k = z.get(y)
-            if k is None:
+            if z is None:
                 x.append(0)
             else:
-                x.append(k)
+                k = z.get(y)
+                if k is None:
+                    x.append(0)
+                else:
+                    x.append(k)
 
         t = np.arange(1960, 2017, 1)
         fig, ax = plt.subplots()
@@ -333,6 +335,11 @@ class SecondScreen:
     ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     ### Adjusted fot This final project
     def list_panel(self, mf):
+
+        # Remove all slaves. Taken from here https://stackoverflow.com/questions/12364981/how-to-delete-tkinter-widgets-from-a-window
+        list = mf.pack_slaves()
+        for l in list:
+            l.destroy()
 
         demoPanel = Frame(mf)
         demoPanel.pack(side=TOP, fill=BOTH, expand=Y)
@@ -443,62 +450,150 @@ class SecondScreen:
     ####### End of Tree view
 
 
-
-
-
-
-
-
-
-
-
-
-
-
     def save_file_button(self):
         # Call filechooser
         filename = filedialog.asksaveasfilename(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
         if filename is None: return  # Return if Cancel is pressed
         filename = filename +'.csv'
-        print(filename)
         Data.tunas_saver(filename)
 
+    def boxes_clear(self):
+        """
+        Cleans all entry boxes
+        :return: None
+        """
+        #Clearing boxes
+        self.en_refDate.set('')
+        self.food_avail.current(0)
+        self.en_commodity.set('')
+        self.uom_sel.current(0)
+        self.en_uomid.set('')
+        self.scal_sel.current(0)
+        self.en_scalarid.set('')
+        self.en_vector.set('')
+        self.en_coordinate.set('')
+        self.en_value.set('')
+        self.en_status.set('')
+        self.en_symbol.set('')
+        self.en_terminated.set('')
+        self.en_decimals.set('')
+
+
+    def new_file(self):
+        #Delete all Tunas
+        Data.tunas = []
+        Data.analyzedTunasKilos = {}
+        Data.analyzedTunasLitres = {}
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+
+        #Making Graph again
+        #Refresh graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+        self.boxes_clear()
 
 
 
+    ### Buttons callbacks
+    def create_button(self):
+        print('Create button')
+        #Create an array and fill it with data from the screen
+        tu = []
+        tu.append(self.en_refDate.get())
+        try:
+            x = int(tu[0])
+            if x < 1960 or x > 2017:
+                raise ValueError
+        except ValueError as error:
+            messagebox.showerror("ENTRY ERROR",
+                                 "REF_DATE must be between 1960 and 2017")
+            return
+        tu.append('Canada')
+        tu.append('2016A000011124')
+        tu.append(self.food_avail.get())
+        tu.append(self.en_commodity.get())
+        tu.append(self.uom_sel.get())
+        tu.append(self.en_uomid.get())
+        tu.append(self.scal_sel.get())
+        tu.append(self.en_scalarid.get())
+        tu.append(self.en_vector.get())
+        tu.append(self.en_coordinate.get())
+        tu.append(self.en_value.get())
+        tu.append(self.en_status.get())
+        tu.append(self.en_symbol.get())
+        tu.append(self.en_terminated.get())
+        tu.append(self.en_decimals.get())
+        tuna = Tuna()
+        tuna.setTunaFeatures(tu)
+        Data.tunas.append(tuna)
+        self.boxes_clear()
+
+        #Default values for boxes
+        self.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
+        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+
+
+    #Second screen Constructor
     def __init__(self):
-        root = Tk()
+        self.root = Tk()
 
         #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
-        root.option_add('*tearOff', False)
-        menubar = Menu(root)
-        root.config(menu=menubar)
+        self.root.option_add('*tearOff', False)
+        menubar = Menu(self.root)
+        self.root.config(menu=menubar)
         file = Menu(menubar)
         menubar.add_cascade(menu=file, label='File')
+        file.add_command(label='New File', command=self.new_file)
         file.add_command(label='Save File', command=self.save_file_button)
+        file.add_separator()
+        file.add_command(label='Exit', command=lambda: self.root.destroy())
 
         # Second screen styling
-        self.analyzeTuna()
-        root.resizable(False, False)  # Not resizable screen
-        root.geometry('1500x1000+150+0')
-        root.title('CST8333_FinalProject by Nikolay Melnik')
+        self.root.resizable(False, False)  # Not resizable screen
+        self.root.geometry('1500x1000+150+0')
+        self.root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
         self.style.configure('TLabel', font=('Arial', 12))
         self.style.configure('TButton', font=('Arial', 10))
 
         # Forming Top Frame
-        self.frame_top = ttk.Frame(root)
+        self.frame_top = ttk.Frame(self.root)
         self.frame_top.pack()
+
+
+        #Default values for boxes
+        self.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        Data.currentKey = self.keysList[0]
+
+        #Printing Graph
+        self.printGraph(self.frame_top)
 
         ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0, columnspan=4, pady=5)
         ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=2, column=0, columnspan=4, pady=10)
         ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=3, column=2, sticky="w",pady=10)
         ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=3, column=0, sticky="w", pady=10)
 
-        #Default values for boxes
-        Data.currentUOM = 'Litres per person, per year'
-        Data.currentData = Data.analyzedTunasLitres
-        self.keysList = list(Data.currentData.keys())
 
         #Callback method for UOM box
         def changeUOM(event):
@@ -508,7 +603,11 @@ class SecondScreen:
                 Data.currentData = Data.analyzedTunasLitres
                 self.keysList = list(Data.currentData.keys())
                 self.comm['values'] = self.keysList
-                self.comm.current(0)
+                if len(self.keysList) < 1:
+                    self.comm.set('')
+                else:
+                    self.comm.current(0)
+
                 #Refresh Graph
                 Data.currentKey = self.comm.get()
                 self.printGraph(self.frame_top)
@@ -517,7 +616,10 @@ class SecondScreen:
                 Data.currentData = Data.analyzedTunasKilos
                 self.keysList = list(Data.currentData.keys())
                 self.comm['values'] = self.keysList
-                self.comm.current(0)
+                if len(self.keysList) < 1:
+                    self.comm.set('')
+                else:
+                    self.comm.current(0)
                 #Refresh Graph
                 Data.currentKey = self.comm.get()
                 self.printGraph(self.frame_top)
@@ -534,9 +636,9 @@ class SecondScreen:
         self.choice.current(0)
         self.choice.grid(row=3, column=1, sticky="w", pady=10)
 
-        Data.currentKey = self.keysList[0]
-        self.printGraph(self.frame_top)
-
+        # self.analyzeTuna()
+        # Data.currentKey = self.keysList[0]
+        # self.printGraph(self.frame_top)
 
         #Callback method for Commodity box
         def changeComm(event):
@@ -555,15 +657,15 @@ class SecondScreen:
 
     #Second Part of the screen, 2nd frame Constructing
         # Forming Top Frame
-        self.frame_bottom1 = ttk.Frame(root)
+        self.frame_bottom1 = ttk.Frame(self.root)
         self.frame_bottom1.pack()
-        self.frame_bottom2 = ttk.Frame(root)
+        self.frame_bottom2 = ttk.Frame(self.root)
         self.frame_bottom2.pack(anchor=W)
-        self.frame_bottom3 = ttk.Frame(root)
+        self.frame_bottom3 = ttk.Frame(self.root)
         self.frame_bottom3.pack(anchor=W)
-        self.frame_bottom4 = ttk.Frame(root)
+        self.frame_bottom4 = ttk.Frame(self.root)
         self.frame_bottom4.pack(anchor=W)
-        self.frame_bottom5 = ttk.Frame(root)
+        self.frame_bottom5 = ttk.Frame(self.root)
         self.frame_bottom5.pack(anchor=W)
 
         # #Packing stuff
@@ -575,6 +677,7 @@ class SecondScreen:
         self.en_refDate = StringVar()
         ttk.Entry(self.frame_bottom2, textvariable=self.en_refDate, width=5).pack(side=LEFT, pady=5)
 
+        ttk.Label(self.frame_bottom2, text='   GEO: Canada').pack(side=LEFT, pady=5)
         ttk.Label(self.frame_bottom2, text='   DGUID: 2016A000011124').pack(side=LEFT, pady=5)
         ttk.Label(self.frame_bottom2, text='    Food Categories: ').pack(side=LEFT, pady=5)
         #Food Categories Combo box
@@ -650,9 +753,11 @@ class SecondScreen:
 
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
-        buttonCreate = ttk.Button(self.frame_bottom5, text="Create New Entry").pack(side=LEFT, pady=5, padx=10)
+
+
+        ttk.Button(self.frame_bottom5, text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
         buttonUpdate = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
-        buttonDelete = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
+        buttonDelete = ttk.Button(self.frame_bottom5, text="Delete Entry").pack(side=LEFT, pady=5, padx=10)
 
         self.list_panel(self.frame_bottom1)
 
