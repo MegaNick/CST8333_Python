@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+
 class TunaSkeleton(metaclass=ABCMeta):
     """
     This class is purely abstract class designed to demonstrate Inheritance capability of Python
@@ -128,14 +129,139 @@ class Tuna(TunaSkeleton):
 
 
 class Data:
-    tunas = []
-    tunasHeader = Tuna()
-    analyzedTunasLitres = {}
-    analyzedTunasKilos = {}
-    currentUOM = ""
-    currentData = {}
-    currentKey = ""
+    """
+    This class is holding data for use through the program
+    """
 
+    tunas = []
+    """
+    Array of Tuna objects representing CSV file
+    """
+
+    tunasHeader = Tuna()
+    """
+    A Tuna object with information from the first line of CSV
+    """
+
+    analyzedTunasLitres = {}
+    """
+    Analyzed dictionary of Tunas separated as litter volume
+    """
+
+    analyzedTunasKilos = {}
+    """
+    Analyzed dictionary of Tunas separated as kilograms volume
+    """
+
+    currentUOM = ""
+    """
+    Current UOM in the graph. 'Litres per person, per year' or 'Kilograms per person, per year'
+    """
+
+    currentData = {}
+    """
+    Current data for the graph as dictionary
+    """
+
+    currentKey = ""
+    """
+    Keys extracted from dictionary to be presented as a choice in GUI
+    """
+
+    def tunas_loader(x=""):
+        """
+        This class method is taking a full file path and loading a CSV File, check it's integrity and then
+        transfers it into Array of Tunas
+        :param: String having a full filepath to CSV file
+        :return: None. The array is put into class variable Data.tunas[]
+        """
+        try:
+            with open(x) as f:
+                count = 0
+                for line in f:
+
+                    # If file has bad zeros - 0x00 or bad characters above 0x80. We need to get rid of them as well as from \n and "
+                    a = ""
+                    for x in line:
+                        if x < ' ':
+                            if x != '\t':
+                                continue
+                        elif x >= '\x80':
+                            continue
+                        elif x == '"':
+                            continue
+                        a = a + x
+
+                    # a is clean, do split
+                    b = a.split(',')
+
+                    #If it is the first line combine together columns 5 and 6
+                    if count > 0:
+                        b[5] = b[5] + ',' + b[6]
+                        b.pop(6)
+
+                    # if a contains 16 elements, we are good, if not, do next
+                    if len(b) != 16:
+                        continue
+
+                    # Are we processing correct file?
+                    if count == 0:
+                        if (b[1] != 'GEO') or (b[2] != 'DGUID'):
+                            raise IOError("Data set is corrupted or not specified")
+                    count = count + 1
+
+                    # Create Tuna object
+                    tuna = Tuna()
+                    tuna.setTunaFeatures(b)
+                    Data.tunas.append(tuna)
+
+        except IOError as error:
+            messagebox.showerror("FILE READING ERROR",
+                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        Data.tunasHeader = Data.tunas[0]
+        Data.tunas.pop(0)
+        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
+        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+
+    def tunas_saver(name=""):
+        """
+        Saving Tunas into a CSV file according to path
+        :param: String having a full filepath to CSV file
+        :return: None
+        """
+
+        def compactor(y=Tuna):
+            """
+            Nested method takes Tuna and returns a String of CSV coded Tuna
+            :param y: Tuna object to be compacted into CSV
+            :return: String of CSV Tuna
+            """
+            line = ""
+            t = y.getTunaFeatures()
+            count = 0
+            for z in t:
+                line = line + z
+                if count < 15:
+                    line = line + ','
+                count = count + 1
+            line = line + '\n'
+            return line
+
+        #Open file for processing. Some ideas are form here https://www.w3schools.com/python/python_file_write.asp
+        try:
+            f = open(name, "w")
+            f.write(compactor(Data.tunasHeader))
+            for tuna in Data.tunas:
+                f.write(compactor(tuna))
+            f.close()
+        except IOError:
+            messagebox.showerror("FILE SAVING ERROR",
+                                 "There was an ERROR during saving\nPlease press OK and repeat saving")
+            return
+        messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
 
 # Second GUI Starter
 class SecondScreen:
@@ -143,8 +269,6 @@ class SecondScreen:
     # class variable to track direction of column
     # header sort
     SortDir = True  # descending
-
-
 
     # CSV array analyzer
     def analyzeTuna(self):
@@ -249,8 +373,8 @@ class SecondScreen:
 
     def OnDoubleClick(self, event):
         curItem = self.tree.focus()
-        print(self.tree.item(curItem))
-        print("iid x-", curItem)
+        # print(self.tree.item(curItem))
+        # print("iid x-", curItem)
         #Transfer commodities
         x = self.tree.item(curItem).get('values')
         #print(x)
@@ -331,14 +455,27 @@ class SecondScreen:
 
 
 
-
+    def save_file_button(self):
+        # Call filechooser
+        filename = filedialog.asksaveasfilename(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
+        if filename is None: return  # Return if Cancel is pressed
+        filename = filename +'.csv'
+        print(filename)
+        Data.tunas_saver(filename)
 
 
 
 
     def __init__(self):
         root = Tk()
-        # self.master = master
+
+        #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
+        root.option_add('*tearOff', False)
+        menubar = Menu(root)
+        root.config(menu=menubar)
+        file = Menu(menubar)
+        menubar.add_cascade(menu=file, label='File')
+        file.add_command(label='Save File', command=self.save_file_button)
 
         # Second screen styling
         self.analyzeTuna()
@@ -553,54 +690,8 @@ class FirstScreen:
         if filename is None: return  # Return if Cancel is pressed
         print(filename.name)
 
-        try:
-            with open(filename.name) as f:
-                count = 0
-                for line in f:
-
-                    # Here Lines have bad zeros - 0x00 or bad characters above 0x80. We need to get rid of them as well as from \n
-                    a = ""
-                    for x in line:
-                        if x < ' ':
-                            if x != '\t':
-                                continue
-                        elif x >= '\x80':
-                            continue
-                        elif x == '"':
-                            continue
-                        a = a + x
-
-                    # a is clean, do split
-                    b = a.split(',')
-
-                    if count > 0:
-                        b[5] = b[5] + ',' + b[6]
-                        b.pop(6)
-
-                    # if a contains 16 elements, we are good, if not, do next
-                    if len(b) != 16:
-                        continue
-
-                    # Are we processing correct file?
-                    if count == 0:
-                        if (b[1] != 'GEO') or (b[2] != 'DGUID'):
-                            raise IOError("Data set is corrupted or not specified")
-                    count = count + 1
-                    # Create Tuna object
-                    tuna = Tuna()
-                    tuna.setTunaFeatures(b)
-                    Data.tunas.append(tuna)
-
-        except IOError as error:
-            messagebox.showerror("FILE READING ERROR",
-                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
-            return
-        messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
-        Data.tunasHeader = Data.tunas[0]
-        Data.tunas.pop(0)
-        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
-        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
-        Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        #Load file and process Tunas
+        Data.tunas_loader(filename.name)
 
         # Destroying window
         self.master.destroy()
