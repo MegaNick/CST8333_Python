@@ -501,6 +501,8 @@ class SecondScreen:
 
 
     ### Buttons callbacks
+
+    #Create button pressed
     def create_button(self):
         print('Create button')
         #Create an array and fill it with data from the screen
@@ -548,8 +550,91 @@ class SecondScreen:
 
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
-        Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        Data.tunas = sorted(Data.tunas, key=lambda tuna: (int(tuna.REF_DATE), tuna.COMMODITY))
 
+    #Update Button pressed
+    def update_button(self):
+        # If no focus - return
+        x = self.tree.focus()
+        if x== '':
+            return
+        x = int(x)
+        #Create an array and fill it with data from the screen
+        tu = []
+        tu.append(self.en_refDate.get())
+        try:
+            y = int(tu[0])
+            if y < 1960 or y > 2017:
+                raise ValueError
+        except ValueError as error:
+            messagebox.showerror("ENTRY ERROR",
+                                 "REF_DATE must be between 1960 and 2017")
+            return
+        tu.append('Canada')
+        tu.append('2016A000011124')
+        tu.append(self.food_avail.get())
+        tu.append(self.en_commodity.get())
+        tu.append(self.uom_sel.get())
+        tu.append(self.en_uomid.get())
+        tu.append(self.scal_sel.get())
+        tu.append(self.en_scalarid.get())
+        tu.append(self.en_vector.get())
+        tu.append(self.en_coordinate.get())
+        tu.append(self.en_value.get())
+        tu.append(self.en_status.get())
+        tu.append(self.en_symbol.get())
+        tu.append(self.en_terminated.get())
+        tu.append(self.en_decimals.get())
+        tuna = Tuna()
+        tuna.setTunaFeatures(tu)
+        self.boxes_clear()
+
+        #replacing old Tuna
+        Data.tunas[x] = tuna
+
+        #Default values for boxes
+        self.analyzeTuna()
+        if Data.currentUOM == 'Litres per person, per year':
+            Data.currentData = Data.analyzedTunasLitres
+        else:
+            Data.currentData = Data.analyzedTunasKilos
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+    #Delete button
+    def button_delete(self):
+        print('Delete button')
+        #If no focus - return
+        x = self.tree.focus()
+        if x=='':
+            return
+        x = int(x)
+        print(int(x))
+        Data.tunas.pop(x)
+        if len(Data.tunas) == 0:
+            #If Tunas length == 0, do like New file
+            self.new_file()
+            return
+        #If Tunas have something, then do as in update
+        self.boxes_clear()
+        #Default values for boxes
+        self.analyzeTuna()
+        if Data.currentUOM == 'Litres per person, per year':
+            Data.currentData = Data.analyzedTunasLitres
+        else:
+            Data.currentData = Data.analyzedTunasKilos
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
 
     #Second screen Constructor
     def __init__(self):
@@ -756,8 +841,8 @@ class SecondScreen:
 
 
         ttk.Button(self.frame_bottom5, text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
-        buttonUpdate = ttk.Button(self.frame_bottom5, text="Update Entry").pack(side=LEFT, pady=5, padx=10)
-        buttonDelete = ttk.Button(self.frame_bottom5, text="Delete Entry").pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
         self.list_panel(self.frame_bottom1)
 
