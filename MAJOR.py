@@ -6,13 +6,9 @@ from tkinter import *
 from tkinter import ttk, filedialog
 from tkinter import messagebox
 from tkinter.font import Font
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-
 class TunaSkeleton(metaclass=ABCMeta):
     """
     This class is purely abstract class designed to demonstrate Inheritance capability of Python
@@ -45,6 +41,7 @@ class TunaSkeleton(metaclass=ABCMeta):
 
 
 class Tuna(TunaSkeleton):
+
     def __init__(self, REF_DATE=0, GEO="", DGUID="", FOODCATEGORIES="", COMMODITY="", UOM="", UOM_ID="",
                  SCALAR_FACTOR="", SCALAR_ID="", VECTOR="", COORDINATE="", VALUE=0, STATUS="", SYMBOL="", TERMINATED="",
                  DECIMALS=""):
@@ -90,6 +87,7 @@ class Tuna(TunaSkeleton):
         :param array: array [17] holds all fields of the object
         :return:
         """
+        #Assigning one variable's value to another by Nikolay Melnik
         self.REF_DATE = array[0]
         self.GEO = array[1]
         self.DGUID = array[2]
@@ -107,10 +105,12 @@ class Tuna(TunaSkeleton):
         self.TERMINATED = array[14]
         self.DECIMALS = array[15]
 
+    @property
     def getTunaFeatures(self):
         """
         The method returns all the fields of the Tuna object as an array of strings
         :return: array [16] - fields
+        .. moduleauthor::
         """
         x = [self.REF_DATE, self.GEO, self.DGUID, self.FOODCATEGORIES, self.COMMODITY, self.UOM, self.UOM_ID,
              self.SCALAR_FACTOR, self.SCALAR_ID, self.VECTOR,
@@ -133,6 +133,7 @@ class Data:
     This class is holding data for use through the program
     """
 
+    # Class variable declaration by Nikolay Melnik
     tunas = []
     """
     Array of Tuna objects representing CSV file
@@ -168,15 +169,19 @@ class Data:
     Keys extracted from dictionary to be presented as a choice in GUI
     """
 
+    #Loading CSV file by Nikolay Melnik. TESTED
+    @staticmethod
     def tunas_loader(x=""):
         """
         This class method is taking a full file path and loading a CSV File, check it's integrity and then
         transfers it into Array of Tunas
+        by Nikolay Melnik
         :param: String having a full filepath to CSV file
         :return: None. The array is put into class variable Data.tunas[]
         """
         try:
             with open(x) as f:
+                #Primitive int assignment by Nikolay Melnik
                 count = 0
                 for line in f:
 
@@ -208,9 +213,10 @@ class Data:
                     if count == 0:
                         if (b[1] != 'GEO') or (b[2] != 'DGUID'):
                             raise IOError("Data set is corrupted or not specified")
+                    #Math by Nikolay Melnik
                     count = count + 1
 
-                    # Create Tuna object
+                    # Create Tuna object by Nikolay Melnik
                     tuna = Tuna()
                     tuna.setTunaFeatures(b)
                     Data.tunas.append(tuna)
@@ -226,9 +232,12 @@ class Data:
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
 
+    #Saving tunas to CSV by Nikolay Melnik. TESTED
+    @staticmethod
     def tunas_saver(name=""):
         """
         Saving Tunas into a CSV file according to path
+        by Nikolay Melnik
         :param: String having a full filepath to CSV file
         :return: None
         """
@@ -236,11 +245,11 @@ class Data:
         def compactor(y=Tuna):
             """
             Nested method takes Tuna and returns a String of CSV coded Tuna
-            :param y: Tuna object to be compacted into CSV
+            :param y: Tuna object to be compacted into CSV style
             :return: String of CSV Tuna
             """
             line = ""
-            t = y.getTunaFeatures()
+            t = y.getTunaFeatures
             count = 0
             for z in t:
                 line = line + z
@@ -263,19 +272,21 @@ class Data:
             return
         messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
 
-# Second GUI Starter
-class SecondScreen:
-    # Variable for sorting
-    # class variable to track direction of column
-    # header sort
-    SortDir = True  # descending
-
-    # CSV array analyzer
-    def analyzeTuna(self):
+   # CSV array analyzer
+    @staticmethod
+    def analyzeTuna():
+        """
+        Static method analyzes Data.tunas array. Skips all the 'Food available adjusted for losses' positions.
+        Creates two dictionaries: Data.analyzedTunasLitres and Data.analyzedTunasKilos separated according to FOODCATEGORIES:
+        'Litres per person, per year' and 'Kilograms per person, per year'. Every dictionary has a key: a int number in between 1960 and 2017.
+        And a float of VALUE. This dictionaries will be used in graph representation
+        :return: None
+        """
         for x in Data.tunas:
-            # Skip adjusted for losses food. Shouldn't be too complicated
+            # Skip adjusted for losses food. Graph shouldn't be too complicated
             # Another thing is eliminating repetition
             try:
+                #Skipping adjusted for losses food
                 if x.FOODCATEGORIES == 'Food available adjusted for losses':
                     continue
                 if x.UOM == 'Litres per person, per year':
@@ -295,8 +306,18 @@ class SecondScreen:
                         temp.update({int(x.REF_DATE): float(x.VALUE)})
                         Data.analyzedTunasKilos.update({key: temp})
             except ValueError as error:
+                # This is done if there is garbage in columns
                 continue
-    #printing graph data
+
+
+# Second GUI Starter
+class SecondScreen:
+    # Variable for sorting
+    # class variable to track direction of column
+    # header sort
+    SortDir = True  # descending
+
+     #printing graph data
     def printGraph(self, master):
 
         # Grid Graphic forgetter
@@ -307,7 +328,10 @@ class SecondScreen:
 
         # Data for plotting
         # Taken from https://matplotlib.org/gallery/lines_bars_and_markers/simple_plot.html#sphx-glr-gallery-lines-bars-and-markers-simple-plot-py
-        z = Data.currentData.get(Data.currentKey)
+        # Re-declare type by Nikolay Melnik
+        z = 1000 # Here z is int
+        z = Data.currentData.get(Data.currentKey) # Here z is dictionary
+        # Declare variable x as array by Nikolay Melnik
         x = []
         #Years to observe
         for y in range(1960, 2017):
@@ -416,7 +440,6 @@ class SecondScreen:
 
         self.data = []
         for x in Data.tunas:
-            y = x.getTunaTuple()
             self.data.append(x.getTunaTuple())
 
         # configure column headings
@@ -537,7 +560,7 @@ class SecondScreen:
         self.boxes_clear()
 
         #Default values for boxes
-        self.analyzeTuna()
+        Data.analyzeTuna()
         Data.currentUOM = 'Litres per person, per year'
         Data.currentData = Data.analyzedTunasLitres
         self.keysList = list(Data.currentData.keys())
@@ -550,7 +573,7 @@ class SecondScreen:
 
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
-        Data.tunas = sorted(Data.tunas, key=lambda tuna: (int(tuna.REF_DATE), tuna.COMMODITY))
+        Data.tunas = sorted(Data.tunas, key=lambda tuna: (int(tuna.REF_DATE)))
 
     #Update Button pressed
     def update_button(self):
@@ -593,7 +616,7 @@ class SecondScreen:
         Data.tunas[x] = tuna
 
         #Default values for boxes
-        self.analyzeTuna()
+        Data.analyzeTuna()
         if Data.currentUOM == 'Litres per person, per year':
             Data.currentData = Data.analyzedTunasLitres
         else:
@@ -623,7 +646,7 @@ class SecondScreen:
         #If Tunas have something, then do as in update
         self.boxes_clear()
         #Default values for boxes
-        self.analyzeTuna()
+        Data.analyzeTuna()
         if Data.currentUOM == 'Litres per person, per year':
             Data.currentData = Data.analyzedTunasLitres
         else:
@@ -665,7 +688,7 @@ class SecondScreen:
 
 
         #Default values for boxes
-        self.analyzeTuna()
+        Data.analyzeTuna()
         Data.currentUOM = 'Litres per person, per year'
         Data.currentData = Data.analyzedTunasLitres
         self.keysList = list(Data.currentData.keys())
@@ -838,12 +861,11 @@ class SecondScreen:
 
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
-
-
         ttk.Button(self.frame_bottom5, text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
         ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
         ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
+        #Show treevie on screen
         self.list_panel(self.frame_bottom1)
 
 # First GUI Starter
@@ -885,7 +907,7 @@ class FirstScreen:
 
         # Destroying window
         self.master.destroy()
-
+        #Call for second screen
         SecondScreen()
 
     def secondButton(self):
