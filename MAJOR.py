@@ -436,7 +436,7 @@ class Data(object):
                 continue
 
     # DB Mysql creating table. TESTED
-    # ideas from here
+    # ideas from here https://www.w3schools.com/python/python_mysql_select.asp
     def db_create_table(self):
         """
         Method creates table 'records' in database from Data.db_info (by default - py_final_project)
@@ -457,10 +457,10 @@ class Data(object):
                 database=Data.db_info[3]
             )
             mycursor = mydb.cursor()
-
+            # Dropping table
             sql = "DROP TABLE IF EXISTS records"
             mycursor.execute(sql)
-
+            # Creating new table
             sql = 'CREATE TABLE records ('
             #Getting list of header info
             x = Data.tunasHeader.getTunaFeatures
@@ -522,6 +522,16 @@ class Data(object):
 
     # Tunas loader from DB. TESTED
     def read_tunas_from_db(self):
+        """
+        Method reads Tunas from DB. Reads Header into Data.tunasHeader and data into Data.tunas
+        :return: None
+
+        Method: read_tunas_from_db
+        Author: Nikolay Melnik
+        Date created: 10/14/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
@@ -558,6 +568,10 @@ class Data(object):
 
         mycursor.close()
         mydb.close()
+        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
+        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+
 
 
 # Second GUI Starter
@@ -1118,15 +1132,36 @@ class SecondScreen:
         ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
         ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
-        #Show treevie on screen
+        #Show treeview on screen
         self.list_panel(self.frame_bottom1)
 
 # First GUI Starter
-class FirstScreen:
+class FirstScreen(object):
+    """
+    Class responsible for GUI and call backs of the First window
+
+    Class: FirstScreen
+    Extends: object
+    Author: Nikolay Melnik
+    Date created: 10/1/2018
+    Date last modified: 10/14/2018
+    Python Version: 3.7
+    """
 
     def __init__(self, master):
-        self.master = master
+        """
+        Constructor of the class and First GUI screen
+        :param master: Tkinter object of the first window
+        :param: Tk
 
+        Method: __init__ (Constructor)
+        Author: Nikolay Melnik
+        Date created: 10/3/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+
+        self.master = master
         # First screen styling
         master.resizable(False, False)  # Not resizable screen
         master.geometry('450x368+735+356')
@@ -1149,11 +1184,23 @@ class FirstScreen:
         ttk.Button(master, text=' Exit ', command=self.thirdButton).grid(row=5, column=0, pady=5)
 
     def firstButton(self):
+        """
+        Call back method from taking the first choice in the first screen:
+        Button: ' Open and load .CSV file '. Loads file, destroys first screen and goes to the second
+        :return: None.
+
+        Method: secondButton
+        Author: Nikolay Melnik
+        Date created: 10/3/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+
+        :return:
+        """
 
         # Call filechooser
         filename = filedialog.askopenfile(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
         if filename is None: return  # Return if Cancel is pressed
-        print(filename.name)
 
         #Load file and process Tunas
         Data.tunas_loader(filename.name)
@@ -1164,20 +1211,59 @@ class FirstScreen:
         SecondScreen()
 
     def secondButton(self):
+        """
+        Call back method from taking the second choice in the first screen:
+        Button: ' Load data from MySql database (if exists) '. Load data from DB, destroys first screen and goes to the second
+        :return: None.
+
+        Method: secondButton
+        Author: Nikolay Melnik
+        Date created: 10/3/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
         print('Button 2 pressed')
+        # Loading data from the Database
+        Data.read_tunas_from_db(self)
+        # Destroying window
+        self.master.destroy()
+        #Call for second screen
+        SecondScreen()
 
     def thirdButton(self):
+        """
+        Call back method from taking the third choice in the first screen:
+        Button: ' Exit '. Destroys the window and exits
+        :return: None.
+
+        Method: thirdButton
+        Author: Nikolay Melnik
+        Date created: 10/3/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+
         self.master.destroy()
         print('Button 3 pressed')
 
 
 ### Major function
 def main():
+    """
+    Main Entry into the program. Starts the first screen
+    :return: None
+
+    Method: main
+    Author: Nikolay Melnik
+    Date created: 10/1/2018
+    Date last modified: 10/1/2018
+    Python Version: 3.7
+    """
     root = Tk()
     plt.rcParams.update({'figure.max_open_warning': 0}) #Blocking Matplotlib Warnings as per https://github.com/clawpack/visclaw/issues/75
     FirstScreen(root)
 
     root.mainloop()
 
-
+# Mandatory stuff
 if __name__ == "__main__": main()
