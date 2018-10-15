@@ -1,5 +1,12 @@
 # To the Glory of God!
 # CST8333 Project by Nikolay Melnik
+""" CST8333_Final_Project by Nikolay Melnik
+    as a partial fulfillment of the CST8333 course.
+    Ottawa, ON Canada. September-December 2018
+"""
+__version__ = "1.0"
+__author__ = "Nikolay Melnik (id-040874855)"
+
 
 from abc import ABCMeta, abstractmethod
 from tkinter import *
@@ -9,44 +16,87 @@ from tkinter.font import Font
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import operator
+
 class TunaSkeleton(metaclass=ABCMeta):
     """
-    This class is purely abstract class designed to demonstrate Inheritance capability of Python
+    This TunaSkeleton class is purely abstract class designed to demonstrate Inheritance capability of Python.
+
+    Class: TunaSkeleton
+    Extends: object
+    Author: Nikolay Melnik
+    Date created: 10/1/2018
+    Date last modified: 10/14/2018
+    Python Version: 3.7
     """
 
     @abstractmethod
-    def setTunaFeatures(self, array):
+    def setTunaFeatures(self, array=[]):
         """
         Takes an array of parameters - [16] and sets them into created Tuna object
-        :param array: Array of data for Tuna object. places 0 and 12 must be ints, the rest - Strings
-        :return: null
+        :param: List of data for Tuna object. places 0 and 12 must be ints, the rest - Strings
+        :type: list
+        :return: None
+
+        Method: setTunaFeatures
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         pass
 
     @abstractmethod
     def getTunaFeatures(self):
         """
-        Returns all the fields of Tuna object as an array
-        :return: [16] - fields of Tuna object
+        Returns all the fields of Tuna object as a list
+        :return: [16] - fields of Tuna object as a list String values
+        :rtype: list
+
+        Method: getTunaFeatures
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         pass
 
     @abstractmethod
     def getTunaTuple(self):
         """
-         Returns all the fields of Tuna object as Tuple
-         :return: (16) - fields of Tuna object
-         """
+        Returns all the fields of Tuna object as a tuple
+        :return: (16) - fields of Tuna object in a tuple of Strings
+        :rtype: tuple
+
+        Method: getTunaTuple
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
         pass
 
 
 class Tuna(TunaSkeleton):
+    """
+    Tuna class inherits abstract TunaSkeleton. Is the foundation of saving objects in the Assignment.
+    Keeps all 16 fields derived from CSV file in individual objects. Classic Tuna Architecture :)
 
+    Class: Tuna
+    Extends: TunaSkeleton
+    Author: Nikolay Melnik
+    Date created: 10/1/2018
+    Date last modified: 10/14/2018
+    Python Version: 3.7
+    """
+
+    # Constructor. TESTED
     def __init__(self, REF_DATE=0, GEO="", DGUID="", FOODCATEGORIES="", COMMODITY="", UOM="", UOM_ID="",
-                 SCALAR_FACTOR="", SCALAR_ID="", VECTOR="", COORDINATE="", VALUE=0, STATUS="", SYMBOL="", TERMINATED="",
+                 SCALAR_FACTOR="", SCALAR_ID="", VECTOR="", COORDINATE="", VALUE="", STATUS="", SYMBOL="", TERMINATED="",
                  DECIMALS=""):
         """
-        Tuna Constructor
+        Tuna Constructor initializes 16 fields of Tuna object as Strings
+
         :param REF_DATE:
         :param GEO:
         :param DGUID:
@@ -63,6 +113,27 @@ class Tuna(TunaSkeleton):
         :param SYMBOL:
         :param TERMINATED:
         :param DECIMALS:
+        :type REF_DATE: str
+        :type GEO: str
+        :type DGUID: str
+        :type FOODCATEGORIES: str
+        :type COMMODITY: str
+        :type UOM: str
+        :type UOM_ID: str
+        :type SCALAR_FACTOR: str
+        :type SCALAR_ID: str
+        :type VECTOR: str
+        :type COORDINATE: str
+        :type VALUE: str
+        :type STATUS: str
+        :type SYMBOL: str
+        :type TERMINATED: str
+
+        Tuna Constructor
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/8/2018
+        Python Version: 3.7
         """
         self.REF_DATE = REF_DATE
         self.GEO = GEO
@@ -81,11 +152,19 @@ class Tuna(TunaSkeleton):
         self.TERMINATED = TERMINATED
         self.DECIMALS = DECIMALS
 
+    # Tuna features setter/inserter. TESTED
     def setTunaFeatures(self, array):
         """
-        This method sets all the fields from the array into Tuna object
-        :param array: array [17] holds all fields of the object
-        :return:
+        This method sets all the fields from the list array into the Tuna object
+        :param: A list of strings [16] holding all fields of the object to be changed
+        :type: list[16] of strings
+        :return: None
+
+        Method: setTunaFeatures
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         #Assigning one variable's value to another by Nikolay Melnik
         self.REF_DATE = array[0]
@@ -105,22 +184,37 @@ class Tuna(TunaSkeleton):
         self.TERMINATED = array[14]
         self.DECIMALS = array[15]
 
+    #Method to get all the fields. TESTED
     @property
     def getTunaFeatures(self):
         """
         The method returns all the fields of the Tuna object as an array of strings
-        :return: array [16] - fields
-        .. moduleauthor::
+        :return: list [16] - fields of the tuna object
+        :rtype: list[16] of strings
+
+        Method: getTunaFeatures
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         x = [self.REF_DATE, self.GEO, self.DGUID, self.FOODCATEGORIES, self.COMMODITY, self.UOM, self.UOM_ID,
              self.SCALAR_FACTOR, self.SCALAR_ID, self.VECTOR,
              self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS]
         return x
 
+    # Tuna features receiver as a tuple. TESTED
     def getTunaTuple(self):
         """
-        The method returns all the fields of the Tuna object as a Tuple of Strings
-        :return: Tuple [16] - fields
+        The method returns all the fields of the Tuna object as a tuple of Strings
+        :return: Tuple (16) - fields of the Tuna object
+        :rtype: tuple(16) of strings
+
+        Method: getTunaTuple
+        Author: Nikolay Melnik
+        Date created: 10/1/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         x = tuple((self.REF_DATE, self.GEO, self.DGUID, self.FOODCATEGORIES, self.COMMODITY, self.UOM, self.UOM_ID,
              self.SCALAR_FACTOR, self.SCALAR_ID, self.VECTOR,
@@ -128,40 +222,40 @@ class Tuna(TunaSkeleton):
         return x
 
 
-class Data:
+class Data(object):
     """
-    This class is holding data for use through the program
+    This class is holding important data for use through the program. Also holds several methods to work with the data.
+
+    Class: Data
+    Extends: object
+    Author: Nikolay Melnik
+    Date created: 10/1/2018
+    Date last modified: 10/14/2018
+    Python Version: 3.7
     """
 
     # Class variable declaration by Nikolay Melnik
     tunas = []
-    """
-    Array of Tuna objects representing CSV file
-    """
+    """List (array) of Tuna objects representing CSV file"""
 
     tunasHeader = Tuna()
-    """
-    A Tuna object with information from the first line of CSV
-    """
+    """A Tuna object with information from the first line of CSV"""
 
     analyzedTunasLitres = {}
-    """
-    Analyzed dictionary of Tunas separated as litter volume
-    """
+    """Analyzed dictionary of Tunas separated according to litter volume. Keys - years from 1960-2017"""
 
     analyzedTunasKilos = {}
-    """
-    Analyzed dictionary of Tunas separated as kilograms volume
-    """
+    """Analyzed dictionary of Tunas separated according to kilogrammes. Keys - years from 1960-2017"""
 
     currentUOM = ""
     """
-    Current UOM in the graph. 'Litres per person, per year' or 'Kilograms per person, per year'
+    Current UOM in the graph as a string: 'Litres per person, per year' or 'Kilograms per person, per year'
     """
 
     currentData = {}
     """
-    Current data for the graph as dictionary
+    Current data for the graph as dictionary. A copy from analyzedTunasLitres or from analyzedTunasKilos 
+    according to user's choice.
     """
 
     currentKey = ""
@@ -174,10 +268,16 @@ class Data:
     def tunas_loader(x=""):
         """
         This class method is taking a full file path and loading a CSV File, check it's integrity and then
-        transfers it into Array of Tunas
-        by Nikolay Melnik
+        transfers it into list (array) of Tunas
         :param: String having a full filepath to CSV file
+        :type: str
         :return: None. The array is put into class variable Data.tunas[]
+
+        Method: tunas_loader
+        Author: Nikolay Melnik
+        Date created: 10/9/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         try:
             with open(x) as f:
@@ -187,6 +287,7 @@ class Data:
 
                     # If file has bad zeros - 0x00 or bad characters above 0x80. We need to get rid of them as well as from \n and "
                     a = ""
+                    #Decision structures by Nikolay Melnik
                     for x in line:
                         if x < ' ':
                             if x != '\t':
@@ -230,16 +331,22 @@ class Data:
         Data.tunas.pop(0)
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
-        Data.tunas = sorted(Data.tunas, key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
 
     #Saving tunas to CSV by Nikolay Melnik. TESTED
     @staticmethod
     def tunas_saver(name=""):
         """
-        Saving Tunas into a CSV file according to path
-        by Nikolay Melnik
+        Saving Tunas into a CSV file according to the given path
         :param: String having a full filepath to CSV file
+        :type: str
         :return: None
+
+        Method: tunas_saver
+        Author: Nikolay Melnik
+        Date created: 10/9/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
 
         def compactor(y=Tuna):
@@ -334,6 +441,7 @@ class SecondScreen:
         # Declare variable x as array by Nikolay Melnik
         x = []
         #Years to observe
+        # Decision structures by Nikolay Melnik
         for y in range(1960, 2017):
             if z is None:
                 x.append(0)
@@ -355,6 +463,8 @@ class SecondScreen:
         canvas = FigureCanvasTkAgg(fig, master)
         canvas.draw()
         canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
+
+
 
     ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     ### Adjusted fot This final project
@@ -566,14 +676,16 @@ class SecondScreen:
         self.keysList = list(Data.currentData.keys())
         self.comm['values'] = self.keysList
 
+        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
+        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+
         #Printing Graph
         self.printGraph(self.frame_top)
         #Refresh List
         self.list_panel(self.frame_bottom1)
 
-        # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
-        # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
-        Data.tunas = sorted(Data.tunas, key=lambda tuna: (int(tuna.REF_DATE)))
+
 
     #Update Button pressed
     def update_button(self):

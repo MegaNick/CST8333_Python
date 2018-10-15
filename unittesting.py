@@ -19,28 +19,76 @@ class TestTuna(unittest.TestCase):
 
     def test_Tuna(self):
         """
-        Testing integrity of Tuna Class
+        Testing integrity of Tuna Class constructor
         :return: None
+
+        Test Method: test_Tuna
+        Author: Nikolay Melnik
+        Date created: 10/12/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
-        x = Tuna()
-        x.setTunaFeatures([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
-        #Check array
+        x = Tuna(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)
+        #Check received list
         y = x.getTunaFeatures
         count = 1
         for z in y:
             self.assertEqual(count, z)
             count = count + 1
+
+    def test_Tuna_fields_setter_getters(self):
+         """
+         Testing integrity of Tuna fields inserters and receivers
+         :return: None
+
+         Test Method: test_Tuna_fields_setter
+         Author: Nikolay Melnik
+         Date created: 10/12/2018
+         Date last modified: 10/14/2018
+         Python Version: 3.7
+         """
+         x = Tuna()
+         x.setTunaFeatures([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+         # Check received list
+         y = x.getTunaFeatures
+         count = 1
+         for z in y:
+             self.assertEqual(count, z)
+             count = count + 1
+
+    def test_Tuna_fields_tuples(self):
+        """
+        Testing integrity of Tuna fields receiver as tuple
+        :return: None
+
+        Test Method: test_Tuna_fields_tuples
+        Author: Nikolay Melnik
+        Date created: 10/12/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        x = Tuna()
+        x.setTunaFeatures([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
         #Check tuple
         y = x.getTunaTuple()
         count = 1
         for z in y:
-            self.assertEqual(count, z)
-            count = count + 1
+           self.assertEqual(count, z)
+           count = count + 1
 
-
-    # @unittest.mock.patch('messagebox.showinfo', autospec=True)
     def test_save_load(self):
-        path = 'c:/temp/test.csv' #Path for file
+        """
+        Testing creation of CSV files, their integrity and loading
+        :return: None
+
+        Test Method: test_save_load
+        Author: Nikolay Melnik
+        Date created: 10/13/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        # Path for file
+        path = 'c:/temp/test.csv'
         #Create Header
         #Data must be in special format
         array = ['a','GEO','DGUID','d','e','f','aa', 'bb', 'cc', 'dd', 'ee', 'ff', 'aaa', 'bbb', 'ccc', 'ddd']
