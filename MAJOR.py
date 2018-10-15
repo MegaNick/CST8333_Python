@@ -17,6 +17,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import operator
+import mysql.connector
+from mysql.connector import errorcode
 
 class TunaSkeleton(metaclass=ABCMeta):
     """
@@ -263,6 +265,14 @@ class Data(object):
     Keys extracted from dictionary to be presented as a choice in GUI
     """
 
+    db_info = ['localhost', 'pytester', 'password', 'py_final_project']
+    """
+    MySQL credentials: ('host', 'user', 'passwd', 'db')
+    """
+
+
+
+
     #Loading CSV file by Nikolay Melnik. TESTED
     @staticmethod
     def tunas_loader(x=""):
@@ -379,16 +389,25 @@ class Data(object):
             return
         messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
 
-   # CSV array analyzer
+    # CSV array analyzer by Nikolay Melnik. TESTED
     @staticmethod
     def analyzeTuna():
         """
-        Static method analyzes Data.tunas array. Skips all the 'Food available adjusted for losses' positions.
+        Static method analyzes Data.tunas list. Skips all the 'Food available adjusted for losses' positions.
         Creates two dictionaries: Data.analyzedTunasLitres and Data.analyzedTunasKilos separated according to FOODCATEGORIES:
-        'Litres per person, per year' and 'Kilograms per person, per year'. Every dictionary has a key: a int number in between 1960 and 2017.
-        And a float of VALUE. This dictionaries will be used in graph representation
-        :return: None
+        'Litres per person, per year' and 'Kilograms per person, per year'. Every dictionary has a key: a int number in between 1960 and 2017
+        and a float of VALUE. This dictionaries will be used in graph representation
+        :return: None. Changes made in Data.analyzedTunasKilos and Data.analyzedTunasLitres
+
+        Method: analyzeTuna
+        Author: Nikolay Melnik
+        Date created: 10/3/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
+        #Erasing data
+        Data.analyzedTunasKilos = {}
+        Data.analyzedTunasLitres = {}
         for x in Data.tunas:
             # Skip adjusted for losses food. Graph shouldn't be too complicated
             # Another thing is eliminating repetition
@@ -415,6 +434,130 @@ class Data(object):
             except ValueError as error:
                 # This is done if there is garbage in columns
                 continue
+
+    # DB Mysql creating table. TESTED
+    # ideas from here
+    def db_create_table(self):
+        """
+        Method creates table 'records' in database from Data.db_info (by default - py_final_project)
+        May show GUI error in case of error
+        :return: None. Table created in DB
+
+        Method: db_create_table
+        Author: Nikolay Melnik
+        Date created: 10/14/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        try:
+            mydb = mysql.connector.connect(
+                host=Data.db_info[0],
+                user=Data.db_info[1],
+                passwd=Data.db_info[2],
+                database=Data.db_info[3]
+            )
+            mycursor = mydb.cursor()
+
+            sql = "DROP TABLE IF EXISTS records"
+            mycursor.execute(sql)
+
+            sql = 'CREATE TABLE records ('
+            #Getting list of header info
+            x = Data.tunasHeader.getTunaFeatures
+            count = 0
+            for y in x:
+                sql = sql+'`'+y+'`'+' VARCHAR(50)'
+                # add comma if not the last block
+                if count <15:
+                    sql = sql + ','
+                count = count + 1
+            sql = sql + ')'
+            mycursor.execute(sql)
+            mycursor.close()
+            mydb.close()
+        except (Exception) as error:
+            messagebox.showerror("MySQL SAVING ERROR",
+                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
+            mycursor.close()
+            mydb.close()
+
+    #Save tunas in DB. TESTED
+    # ideas from here https://www.w3schools.com/python/python_mysql_insert.asp
+    def save_tunas_in_db(self):
+        """
+        Method saves current tunas into MySQL 'records' DB.
+        May show GUI error in case of error
+        :return: None
+
+        Method: save_tunas_in_db
+        Author: Nikolay Melnik
+        Date created: 10/14/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        # Open DB
+        try:
+            mydb = mysql.connector.connect(
+                host=Data.db_info[0],
+                user=Data.db_info[1],
+                passwd=Data.db_info[2],
+                database=Data.db_info[3]
+            )
+            mycursor = mydb.cursor()
+            #Preparing transaction
+            sql = "INSERT INTO records VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            for x in Data.tunas:
+                val = x.getTunaTuple()
+                mycursor.execute(sql, val)
+            # Commit transaction
+            mydb.commit()
+            print(mycursor.rowcount, "record inserted.")
+            mycursor.close()
+            mydb.close()
+        except Exception as error:
+            messagebox.showerror("MySQL SAVING ERROR",
+                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
+            mycursor.close()
+            mydb.close()
+
+    # Tunas loader from DB. TESTED
+    def read_tunas_from_db(self):
+        try:
+            mydb = mysql.connector.connect(
+                host=Data.db_info[0],
+                user=Data.db_info[1],
+                passwd=Data.db_info[2],
+                database=Data.db_info[3]
+            )
+            Data.tunas = []
+            mycursor = mydb.cursor()
+            #Receive Header names
+            tuna = Tuna()
+            mycursor.execute("show columns from py_final_project.records")
+            myresult = mycursor.fetchall()
+            y = []
+            for x in myresult:
+                y.append(x[0])
+            tuna.setTunaFeatures(y)
+            Data.tunasHeader = tuna
+            # Receive all rows
+            mycursor.execute("SELECT * FROM records")
+
+            myresult = mycursor.fetchall()
+
+            for x in myresult:
+                tuna = Tuna()
+                tuna.setTunaFeatures(list(x))
+                Data.tunas.append(tuna)
+
+        except Exception as error:
+            messagebox.showerror("MySQL SAVING ERROR",
+                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
+            mycursor.close()
+            mydb.close()
+
+        mycursor.close()
+        mydb.close()
 
 
 # Second GUI Starter
@@ -587,7 +730,7 @@ class SecondScreen:
         # Call filechooser
         filename = filedialog.asksaveasfilename(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
         if filename is None: return  # Return if Cancel is pressed
-        filename = filename +'.csv'
+        # filename = filename +'.csv'
         Data.tunas_saver(filename)
 
     def boxes_clear(self):
@@ -615,8 +758,6 @@ class SecondScreen:
     def new_file(self):
         #Delete all Tunas
         Data.tunas = []
-        Data.analyzedTunasKilos = {}
-        Data.analyzedTunasLitres = {}
         Data.currentData = {}
         Data.currentUOM = 'Litres per person, per year'
         self.keysList = []
