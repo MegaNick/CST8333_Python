@@ -572,19 +572,44 @@ class Data(object):
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
 
-
-
 # Second GUI Starter
-class SecondScreen:
-    # Variable for sorting
+class SecondScreen(object):
+    """
+    Class responsible for GUI and call backs of the Second window
+
+    Class: SecondScreen
+    Extends: object
+    Author: Nikolay Melnik
+    Date created: 10/7/2018
+    Date last modified: 10/14/2018
+    Python Version: 3.7
+    """
+
+    # Class Variable for sorting
     # class variable to track direction of column
     # header sort
-    SortDir = True  # descending
+    SortDir = True
+    """Class variable responsible for ascending/descending style of treeview
+        true - ascending, false - descending        
+    """
 
-     #printing graph data
+    # printing graph data
     def printGraph(self, master):
+        """
+        Method prints graph in the second window according to supplied data. All the ideas are taken from the developer's
+        website - https://matplotlib.org/
+        :param: master: Tkinter object of the parent widget
+        :type Tkinter object
+        :return: None
 
-        # Grid Graphic forgetter
+        Method: printGraph
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+
+        # Grid Graphic forgetter. Made to forget all the widgets in row 1
         # Taken from here https://stackoverflow.com/questions/23189610/remove-widgets-from-grid-in-tkinter
         for label in self.frame_top.grid_slaves():
             if int(label.grid_info()["row"]) == 1:
@@ -595,7 +620,7 @@ class SecondScreen:
         # Re-declare type by Nikolay Melnik
         z = 1000 # Here z is int
         z = Data.currentData.get(Data.currentKey) # Here z is dictionary
-        # Declare variable x as array by Nikolay Melnik
+        # Declare variable x as list by Nikolay Melnik
         x = []
         #Years to observe
         # Decision structures by Nikolay Melnik
@@ -621,11 +646,24 @@ class SecondScreen:
         canvas.draw()
         canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
 
-
-
     ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     ### Adjusted fot This final project
     def list_panel(self, mf):
+        """
+        This method creates treeview (Listview) of the tunas list derivied from CSV data class.
+        Also it is capable to create user's data and supplies information for other GUI modules
+        The code and ideas were taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+        Design and implementation were changed according to Project requirements.
+        :param mf: Parent widget (window) where will be put this treeview
+        :type: Tkinter module (frame)
+        :return: None
+
+        Method: list_panel
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
 
         # Remove all slaves. Taken from here https://stackoverflow.com/questions/12364981/how-to-delete-tkinter-widgets-from-a-window
         list = mf.pack_slaves()
@@ -639,9 +677,18 @@ class SecondScreen:
 
     def _create_treeview(self, parent):
         """
-        This
-        :param parent:
-        :return:
+        This method is a part of list_panel method. Creates GUI sceleton for future processing
+        The code and ideas were taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+        Design and implementation were changed according to Project requirements.
+        :param parent: Parent frame
+        :type: Tkinter frame object
+        :return: None
+
+        Method: _create_treeview
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
         """
         f = ttk.Frame(parent)
         f.pack(side=TOP, fill=BOTH, expand=Y)
@@ -667,18 +714,30 @@ class SecondScreen:
         f.rowconfigure(0, weight=1)
         f.columnconfigure(0, weight=1)
 
-        self.tree.bind("<ButtonRelease-1>", self.OnDoubleClick)
+        # Setting call back function for treeview
+        self.tree.bind("<ButtonRelease-1>", self.treeViewClick)
 
-    def OnDoubleClick(self, event):
+    def treeViewClick(self, event):
+        """
+        Call back method assigned by treeview. Called when user clicks mouse o treeview objects
+        :param event: Ignored
+        :type: Virtual event method
+        :return: None but copies data from selected row (tuna) to the GUI
+
+        Method: treeViewClick
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        # Getting focus from treeview as an objects ID number
         curItem = self.tree.focus()
-        # print(self.tree.item(curItem))
-        # print("iid x-", curItem)
         #Transfer commodities
         x = self.tree.item(curItem).get('values')
-        #print(x)
         #Avoid wrong x type
         if type(x) is not list:
             return
+        # Copying values to GUI
         self.en_refDate.set(x[0])
         if x[3] == 'Food available':
             self.food_avail.current(0)
@@ -704,7 +763,21 @@ class SecondScreen:
         self.en_decimals.set(x[15])
 
     def _load_data(self):
+        """
+        Method takes data from Data.tunas list and unpack it into treeview.
+        Gives to every row object an ID for future processing starting from 0
+        The code and ideas were taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+        Design and implementation were changed according to Project requirements.
+        :return: None
 
+        Method: _load_data
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
+        # Unpacking tuna into list of tuples
+        # looping structures - for loop by Nikolay Melnik
         self.data = []
         for x in Data.tunas:
             self.data.append(x.getTunaTuple())
@@ -714,7 +787,7 @@ class SecondScreen:
             self.tree.heading(c, text=c.title(), command=lambda c=c: self._column_sort(c, SecondScreen.SortDir))
             self.tree.column(c, width=Font().measure(c.title()))
 
-        # Add counter
+        # Add counter for ID
         count = 0
         # add data to the tree
         for item in self.data:
@@ -722,6 +795,22 @@ class SecondScreen:
             count = count + 1
 
     def _column_sort(self, col, descending=False):
+        """
+        Call back method for sorting columns. Part of treeview, designed for lambda function
+        The code and ideas were taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
+        Design and implementation were changed according to Project requirements.
+        :param col: Column to be sorted
+        :param descending: Ascending or descending sorting. True for descending, False for ascending
+        :type col: string
+        :type descending:
+        :return: None. Sorted column
+
+        Method: _column_sort
+        Author: Nikolay Melnik
+        Date created: 10/8/2018
+        Date last modified: 10/14/2018
+        Python Version: 3.7
+        """
 
         # grab values to sort as a list of tuples (column value, column id)
         # e.g. [('Apple juice', 'I001'), ('Apple pie filling', 'I002'), ('Apple sauce', 'I003')]
@@ -743,9 +832,15 @@ class SecondScreen:
     def save_file_button(self):
         # Call filechooser
         filename = filedialog.asksaveasfilename(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
-        if filename is None: return  # Return if Cancel is pressed
+        if filename is None or filename == '':
+            # Return if Cancel is pressed
+            return
         # filename = filename +'.csv'
         Data.tunas_saver(filename)
+        # Useless loop for looping demo by Nikolay Melnik
+        c = 0
+        while c < 5:
+            c = c + 1
 
     def boxes_clear(self):
         """
@@ -856,7 +951,7 @@ class SecondScreen:
             y = int(tu[0])
             if y < 1960 or y > 2017:
                 raise ValueError
-        except ValueError as error:
+        except ValueError:
             messagebox.showerror("ENTRY ERROR",
                                  "REF_DATE must be between 1960 and 2017")
             return
