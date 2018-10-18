@@ -1080,8 +1080,16 @@ class SecondScreen(object):
     #Delete button
     def button_delete(self):
         """
+        Call back method when user clicks 'Delete entry' button
+        Does not take any parameters. Does not return any. It takes focus information from GUI treeview screen,
+        references focus to the position in tunas list and DELETEs that tuna.
+        :return: None
 
-        :return:
+        Method: button_delete
+        Author: Nikolay Melnik
+        Date created: 10/11/2018
+        Date last modified: 10/17/2018
+        Python Version: 3.7
         """
         print('Delete button')
         #If no focus - return
@@ -1113,8 +1121,18 @@ class SecondScreen(object):
 
     #Second screen Constructor
     def __init__(self):
-        self.root = Tk()
+        """
+        This constructor is responsible for creation of the second window GUI. It creates windows,
+        pack them with widgets and assigns call back functions
 
+        Method: __init__ (Constructor)
+        Author: Nikolay Melnik
+        Date created: 10/5/2018
+        Date last modified: 10/18/2018
+        Python Version: 3.7
+        """
+
+        self.root = Tk()
         #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
         self.root.option_add('*tearOff', False)
         menubar = Menu(self.root)
@@ -1122,12 +1140,14 @@ class SecondScreen(object):
         file = Menu(menubar)
         menubar.add_cascade(menu=file, label='File')
         file.add_command(label='New File', command=self.new_file)
+        file.add_separator()
         file.add_command(label='Save File', command=self.save_file_button)
         file.add_separator()
         file.add_command(label='Exit', command=lambda: self.root.destroy())
 
         # Second screen styling
-        self.root.resizable(False, False)  # Not resizable screen
+        # Not resizable screen
+        self.root.resizable(False, False)
         self.root.geometry('1500x1000+150+0')
         self.root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
@@ -1137,7 +1157,6 @@ class SecondScreen(object):
         # Forming Top Frame
         self.frame_top = ttk.Frame(self.root)
         self.frame_top.pack()
-
 
         #Default values for boxes
         Data.analyzeTuna()
@@ -1157,32 +1176,36 @@ class SecondScreen(object):
 
         #Callback method for UOM box
         def changeUOM(event):
+            """
+            Nested supply method. Called when user changes UOM combobox. Changes data sets: according to litters or kilos
+            for graphical representation. Refreshes graph.
+            :param event: Virtual event from UOM combobox
+            :type: event
+            :return: None
 
+            Nested Method: changeUOM
+            Author: Nikolay Melnik
+            Date created: 10/11/2018
+            Date last modified: 10/17/2018
+            Python Version: 3.7
+            """
+
+            # Check what was selected
             Data.currentUOM = self.choice.get()
             if self.choice.get() == 'Litres per person, per year':
                 Data.currentData = Data.analyzedTunasLitres
-                self.keysList = list(Data.currentData.keys())
-                self.comm['values'] = self.keysList
-                if len(self.keysList) < 1:
-                    self.comm.set('')
-                else:
-                    self.comm.current(0)
-
-                #Refresh Graph
-                Data.currentKey = self.comm.get()
-                self.printGraph(self.frame_top)
-
             elif self.choice.get() == 'Kilograms per person, per year':
                 Data.currentData = Data.analyzedTunasKilos
-                self.keysList = list(Data.currentData.keys())
-                self.comm['values'] = self.keysList
-                if len(self.keysList) < 1:
-                    self.comm.set('')
-                else:
-                    self.comm.current(0)
-                #Refresh Graph
-                Data.currentKey = self.comm.get()
-                self.printGraph(self.frame_top)
+            # Set data for graphs and comboboxes
+            self.keysList = list(Data.currentData.keys())
+            self.comm['values'] = self.keysList
+            if len(self.keysList) < 1:
+                self.comm.set('')
+            else:
+                self.comm.current(0)
+            #Refresh Graph
+            Data.currentKey = self.comm.get()
+            self.printGraph(self.frame_top)
 
         #combo box change UOM
         # https://www.programcreek.com/python/example/104110/tkinter.ttk.Combobox
@@ -1196,14 +1219,22 @@ class SecondScreen(object):
         self.choice.current(0)
         self.choice.grid(row=3, column=1, sticky="w", pady=10)
 
-        # self.analyzeTuna()
-        # Data.currentKey = self.keysList[0]
-        # self.printGraph(self.frame_top)
-
         #Callback method for Commodity box
         def changeComm(event):
+            """
+            Nested supply method. Called when user changes Commodity combobox. Takes commodity name as a key
+            for graphical representation. Refreshes graph.
+            :param event: Virtual event from commodity combobox
+            :type: event
+            :return: None
+
+            Nested Method: changeComm
+            Author: Nikolay Melnik
+            Date created: 10/11/2018
+            Date last modified: 10/17/2018
+            Python Version: 3.7
+            """
             Data.currentKey = self.comm.get()
-            print(self.comm.get())
             self.printGraph(self.frame_top)
 
         commvar = StringVar()
@@ -1215,7 +1246,7 @@ class SecondScreen(object):
         self.comm.grid(row=3, column=3, sticky="w")
         # x= list(Data.analyzedTunasLitres.keys())
 
-    #Second Part of the screen, 2nd frame Constructing
+        #Second Part of the screen, 2nd frame Constructing
         # Forming Top Frame
         self.frame_bottom1 = ttk.Frame(self.root)
         self.frame_bottom1.pack()
