@@ -263,7 +263,7 @@ class TestTuna(unittest.TestCase):
         # Creating table
         Data.db_create_table(self)
         Data.save_tunas_in_db(self)
-        Data.read_tunas_from_db(self)
+        Data.read_tunas_from_db()
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         self.assertEqual(Data.tunas[0].VALUE, '10')
         self.assertEqual(Data.tunas[1].VALUE, '300')
