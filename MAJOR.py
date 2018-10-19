@@ -1,7 +1,7 @@
 # To the Glory of God!
 # CST8333 Project by Nikolay Melnik
 """ CST8333_Final_Project by Nikolay Melnik
-    as a partial fulfillment of the CST8333 course.
+    Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
 """
 __version__ = "1.0"
@@ -10,12 +10,15 @@ __author__ = "Nikolay Melnik (id-040874855)"
 # Module imports by Nikolay Melnik
 from abc import ABCMeta, abstractmethod
 from tkinter import *
+# Selective import by Nikolay Melnik
 from tkinter import ttk, filedialog
 from tkinter import messagebox
 from tkinter.font import Font
+# Example of import aliasing by Nikolay Melnik
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+# Simple import by Nikolay Melnik
 import mysql.connector
 
 class TunaSkeleton(metaclass=ABCMeta):
@@ -306,6 +309,7 @@ class Data(object):
         Date last modified: 10/14/2018
         Python Version: 3.7
         """
+        # Loading file with WITH statement by Nikolay Melnik (abridged!)
         try:
             with open(x) as f:
                 #Primitive int assignment by Nikolay Melnik
@@ -402,7 +406,7 @@ class Data(object):
             return line
 
         #Open file for processing. Some ideas are form here https://www.w3schools.com/python/python_file_write.asp
-        # Exception handling by Nikolay Melnik
+        # Simple file writing and exception handling by Nikolay Melnik
         try:
             f = open(name, "w")
             f.write(compactor(Data.tunasHeader))
@@ -412,6 +416,7 @@ class Data(object):
         except IOError:
             messagebox.showerror("FILE SAVING ERROR",
                                  "There was an ERROR during saving\nPlease press OK and repeat saving")
+            f.close()
             return
         messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
 

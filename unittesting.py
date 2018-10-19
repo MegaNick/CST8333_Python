@@ -1,21 +1,26 @@
-import unittest
+# To the Glory of God!
+# CST8333 Project by Nikolay Melnik
+""" CST8333_Final_Project by Nikolay Melnik
+    unittest module program as a partial fulfillment of the CST8333 course.
+    Works with major module by Nikolay Melnik
+    Ottawa, ON Canada. September-December 2018
+"""
 import unittest.mock
 from MAJOR import *
 import os
 
-# class TestCalc(unittest.TestCase):
-#
-#     def test_add(self):
-#         result = calc.add(10,2)
-#         self.assertEqual(result, 15)
 
 class TestTuna(unittest.TestCase):
     """
     Testing integrity of Tuna Object
     """
 
+    counter = 1
+    """ Class variable which counts start of a new test"""
+
     def setUp(self):
-        print('Starting test')
+        print('Starting test #', TestTuna.counter)
+        TestTuna.counter = TestTuna.counter + 1
 
     def test_Tuna(self):
         """
@@ -263,7 +268,7 @@ class TestTuna(unittest.TestCase):
         # Creating table
         Data.db_create_table(self)
         Data.save_tunas_in_db(self)
-        Data.read_tunas_from_db()
+        Data.read_tunas_from_db(self)
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         self.assertEqual(Data.tunas[0].VALUE, '10')
         self.assertEqual(Data.tunas[1].VALUE, '300')
