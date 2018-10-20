@@ -287,9 +287,9 @@ class Data(object):
     Keys extracted from dictionary to be presented as a choice in GUI
     """
 
-    db_info = ['localhost', 'pytester', 'password', 'py_final_project']
+    db_info = ['localhost', '3306','pytester', 'password', 'py_final_project']
     """
-    MySQL credentials: ('host', 'user', 'passwd', 'db')
+    MySQL credentials: ('host', 'port', 'user', 'passwd', 'db')
     """
 
 
@@ -483,9 +483,10 @@ class Data(object):
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
-                user=Data.db_info[1],
-                passwd=Data.db_info[2],
-                database=Data.db_info[3]
+                port=Data.db_info[1],
+                user=Data.db_info[2],
+                passwd=Data.db_info[3],
+                database=Data.db_info[4]
             )
             mycursor = mydb.cursor()
             # Dropping table
@@ -530,9 +531,10 @@ class Data(object):
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
-                user=Data.db_info[1],
-                passwd=Data.db_info[2],
-                database=Data.db_info[3]
+                port=Data.db_info[1],
+                user=Data.db_info[2],
+                passwd=Data.db_info[3],
+                database=Data.db_info[4]
             )
             mycursor = mydb.cursor()
             #Preparing transaction
@@ -566,9 +568,10 @@ class Data(object):
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
-                user=Data.db_info[1],
-                passwd=Data.db_info[2],
-                database=Data.db_info[3]
+                port=Data.db_info[1],
+                user=Data.db_info[2],
+                passwd=Data.db_info[3],
+                database=Data.db_info[4]
             )
             Data.tunas = []
             mycursor = mydb.cursor()
@@ -592,13 +595,16 @@ class Data(object):
                 Data.tunas.append(tuna)
 
         except Exception:
-            messagebox.showerror("MySQL SAVING ERROR",
-                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
-            mycursor.close()
-            mydb.close()
+            messagebox.showerror("MySQL READING ERROR",
+                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
+            Data.tunas = []
+        finally:
+            # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
+            if 'mycursor' in locals():
+                mycursor.close()
+            if 'mydb' in locals():
+                mydb.close()
 
-        mycursor.close()
-        mydb.close()
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
@@ -1449,6 +1455,9 @@ class FirstScreen(object):
         print('Button 2 pressed')
         # Loading data from the Database
         Data.read_tunas_from_db(self)
+        # If no tunas loaded - exit
+        if len(Data.tunas) < 1:
+            return
         # Destroying window
         self.master.destroy()
         #Call for second screen
