@@ -1,5 +1,7 @@
 # To the Glory of God!
 # CST8333 Project by Nikolay Melnik
+# The author used www.lynda.com cycle of lectures about Tkinter - https://www.lynda.com/MyPlaylist/Watch/15528494/184085?autoplay=true
+# as an inspiration and major source of ideas for this particular project.
 """ CST8333_Final_Project by Nikolay Melnik
     Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
@@ -401,6 +403,7 @@ class Data(object):
                 line = line + z
                 if count < 15:
                     line = line + ','
+                # Variable participating in calculation by Nikolay Melnik
                 count = count + 1
             line = line + '\n'
             return line
@@ -412,12 +415,14 @@ class Data(object):
             f.write(compactor(Data.tunasHeader))
             for tuna in Data.tunas:
                 f.write(compactor(tuna))
-            f.close()
         except IOError:
             messagebox.showerror("FILE SAVING ERROR",
                                  "There was an ERROR during saving\nPlease press OK and repeat saving")
-            f.close()
             return
+        finally:
+            # If variable 'f' - file exists, close it
+            if 'f' in locals():
+                f.close()
         messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
 
     # CSV array analyzer by Nikolay Melnik. TESTED
@@ -544,7 +549,7 @@ class Data(object):
                 mycursor.execute(sql, val)
             # Commit transaction
             mydb.commit()
-            print(mycursor.rowcount, "record inserted.")
+            # print(mycursor.rowcount, "record inserted.")
             mycursor.close()
             mydb.close()
         except Exception as error:
@@ -1102,13 +1107,13 @@ class SecondScreen(object):
         Date last modified: 10/17/2018
         Python Version: 3.7
         """
-        print('Delete button')
+        # print('Delete button')
         #If no focus - return
         x = self.tree.focus()
         if x=='':
             return
         x = int(x)
-        print(int(x))
+        # print(int(x))
         Data.tunas.pop(x)
         if len(Data.tunas) == 0:
             #If Tunas length == 0, do like New file
@@ -1452,7 +1457,7 @@ class FirstScreen(object):
         Date last modified: 10/14/2018
         Python Version: 3.7
         """
-        print('Button 2 pressed')
+        # print('Button 2 pressed')
         # Loading data from the Database
         Data.read_tunas_from_db(self)
         # If no tunas loaded - exit
@@ -1477,7 +1482,7 @@ class FirstScreen(object):
         """
 
         self.master.destroy()
-        print('Button 3 pressed')
+        # print('Button 3 pressed')
 
 
 

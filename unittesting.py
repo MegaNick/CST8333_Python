@@ -1,8 +1,9 @@
 # To the Glory of God!
 # CST8333 Project by Nikolay Melnik
+# Combination of unittest test methods
 """ CST8333_Final_Project by Nikolay Melnik
     unittest module program as a partial fulfillment of the CST8333 course.
-    Works with major module by Nikolay Melnik
+    Works with major module - MAJOR.py by Nikolay Melnik
     Ottawa, ON Canada. September-December 2018
 """
 import unittest.mock
@@ -19,8 +20,31 @@ class TestTuna(unittest.TestCase):
     """ Class variable which counts start of a new test"""
 
     def setUp(self):
+        """
+        Preparation method in testing. Counts tests
+        :return: None
+
+        Overridden method: setUp
+        Author: Nikolay Melnik
+        Date created: 10/14/2018
+        Date last modified: 10/20/2018
+        Python Version: 3.7
+        """
         print('Starting test #', TestTuna.counter)
         TestTuna.counter = TestTuna.counter + 1
+
+    def tearDown(self):
+        """
+        Finishing method. Does nothing except printing my name
+        :return: None
+
+        Overridden method: tearDown
+        Author: Nikolay Melnik
+        Date created: 10/14/2018
+        Date last modified: 10/20/2018
+        Python Version: 3.7
+        """
+        print('Finished. Tests prepared by Nikolay Melnik')
 
     def test_Tuna(self):
         """
@@ -184,9 +208,10 @@ class TestTuna(unittest.TestCase):
 
         mydb = mysql.connector.connect(
             host=Data.db_info[0],
-            user=Data.db_info[1],
-            passwd=Data.db_info[2],
-            database=Data.db_info[3]
+            port=Data.db_info[1],
+            user=Data.db_info[2],
+            passwd=Data.db_info[3],
+            database=Data.db_info[4]
         )
         mycursor = mydb.cursor()
         mycursor.execute("show columns from py_final_project.records")
@@ -209,29 +234,20 @@ class TestTuna(unittest.TestCase):
         Date last modified: 10/14/2018
         Python Version: 3.7
         """
-        #Creating tunas
-        #header
-        tuna = Tuna('REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
-             'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED', 'DECIMALS')
-        Data.tunasHeader = tuna
-        #Other tunas
+        #Creating tuna
         tuna = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
                     'zzz', 'Units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
-        tuna1 = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
-                     'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '300', '', '', '', '2')
-        tuna2 = Tuna('1965', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
-                     'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '20', '', '', '', '2')
-        tuna3 = Tuna('1965', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
-                     'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '200', '', '', '', '2')
-        tuna4 = Tuna('1970', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
-                     'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '30', '', '', '', '2')
-        tuna5 = Tuna('1970', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
-                     'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '100', '', '', '', '2')
-        # Populating
-        Data.tunas = [tuna, tuna1, tuna2, tuna3, tuna4, tuna5]
+        # inserting into Data.tunas
+        Data.tunas = [tuna]
         # Creating table
         Data.db_create_table(self)
         Data.save_tunas_in_db(self)
+        Data.read_tunas_from_db(self)
+        x = tuna.getTunaFeatures
+        y = Data.tunas[0].getTunaFeatures
+        for z in range(0,16):
+            self.assertEqual(x[z], y[z])
+
 
     #Testing reading Tunas from DB
     def test_read_tunas_from_db(self):
