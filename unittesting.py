@@ -6,6 +6,18 @@
     Works with major module - MAJOR.py by Nikolay Melnik
     Ottawa, ON Canada. September-December 2018
 """
+
+"""
+CST8333 18F (350, 351) Dataset Attribution
+Attribution and License
+The dataset for use in CST8333 18F Section 350, 351 comes from the Open Government of Canada, published by Statistics Canada.
+
+You can obtain the dataset here:
+Statistics Canada. (May 30, 2018). Food available in Canada [webpage] Retrieved on August 29, 2018 from https://open.canada.ca/data/en/dataset/a683c640-b5fd-48f8-a0f1-d619b8f7e04c
+
+You need to review the Open Government License which is found here: http://open.canada.ca/en/open-government-licence-canada
+"""
+
 import unittest.mock
 from MAJOR import *
 import os
