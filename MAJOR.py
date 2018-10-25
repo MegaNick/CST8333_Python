@@ -9,6 +9,19 @@
 __version__ = "1.0"
 __author__ = "Nikolay Melnik (id-040874855)"
 
+"""
+CST8333 18F (350, 351) Dataset Attribution
+Attribution and License
+The dataset for use in CST8333 18F Section 350, 351 comes from the Open Government of Canada, published by Statistics Canada.
+
+You can obtain the dataset here:
+Statistics Canada. (May 30, 2018). Food available in Canada [webpage] Retrieved on August 29, 2018 from https://open.canada.ca/data/en/dataset/a683c640-b5fd-48f8-a0f1-d619b8f7e04c
+
+You need to review the Open Government License which is found here: http://open.canada.ca/en/open-government-licence-canada
+"""
+
+
+
 # Module imports by Nikolay Melnik
 from abc import ABCMeta, abstractmethod
 from tkinter import *
@@ -1157,7 +1170,11 @@ class SecondScreen(object):
         menubar.add_cascade(menu=file, label='File')
         file.add_command(label='New File', command=self.new_file)
         file.add_separator()
+        file.add_command(label='Open File')
         file.add_command(label='Save File', command=self.save_file_button)
+        file.add_separator()
+        file.add_command(label='Load from Database')
+        file.add_command(label='Save to Database')
         file.add_separator()
         file.add_command(label='Exit', command=lambda: self.root.destroy())
 
