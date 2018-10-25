@@ -316,7 +316,8 @@ class Data(object):
         transfers it into list (array) of Tunas
         :param: String having a full filepath to CSV file
         :type: str
-        :return: None. The array is put into class variable Data.tunas[]
+        :return: int of error or succes: 0 - ok, 1- IOError, 2 - error - data corrupted. The array is put into class variable Data.tunas[]
+        :rtype: int
 
         Method: tunas_loader
         Author: Nikolay Melnik
@@ -372,19 +373,18 @@ class Data(object):
                     Data.tunas.append(tuna)
 
         except IOError:
-            messagebox.showerror("FILE READING ERROR",
-                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
-            return
+            # If loading failed
+            return 1
         except LoadError:
-            messagebox.showerror("FILE READING ERROR",
-                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
-            return
-        messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+            # If data corrupted
+            return 2
         Data.tunasHeader = Data.tunas[0]
         Data.tunas.pop(0)
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        # If all ok
+        return 0
 
     #Saving tunas to CSV by Nikolay Melnik. TESTED
     @staticmethod
@@ -393,12 +393,13 @@ class Data(object):
         Saving Tunas into a CSV file according to the given path
         :param: String having a full filepath to CSV file
         :type: str
-        :return: None
+        :return: Int value of error or success: 0 - all ok, 1 - error during saving
+        :rtype: int
 
         Method: tunas_saver
         Author: Nikolay Melnik
         Date created: 10/9/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
 
@@ -429,14 +430,12 @@ class Data(object):
             for tuna in Data.tunas:
                 f.write(compactor(tuna))
         except IOError:
-            messagebox.showerror("FILE SAVING ERROR",
-                                 "There was an ERROR during saving\nPlease press OK and repeat saving")
-            return
+            return 1
         finally:
             # If variable 'f' - file exists, close it
             if 'f' in locals():
                 f.close()
-        messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
+        return 0
 
     # CSV array analyzer by Nikolay Melnik. TESTED
     @staticmethod
@@ -490,12 +489,13 @@ class Data(object):
         """
         Method creates table 'records' in database from Data.db_info (by default - py_final_project)
         May show GUI error in case of error
-        :return: None. Table created in DB
+        :return: int 0 - all ok, 1 -error. Table created in DB
+        :rtype: int
 
         Method: db_create_table
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         try:
@@ -512,8 +512,10 @@ class Data(object):
             mycursor.execute(sql)
             # Creating new table
             sql = 'CREATE TABLE records ('
-            #Getting list of header info
-            x = Data.tunasHeader.getTunaFeatures
+            #header info
+            x = ['REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
+                        'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED',
+                        'DECIMALS']
             count = 0
             for y in x:
                 sql = sql+'`'+y+'`'+' VARCHAR(50)'
@@ -523,13 +525,16 @@ class Data(object):
                 count = count + 1
             sql = sql + ')'
             mycursor.execute(sql)
-            mycursor.close()
-            mydb.close()
+            mydb.commit()
+            return 0
         except (Exception) as error:
-            messagebox.showerror("MySQL SAVING ERROR",
-                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
-            mycursor.close()
-            mydb.close()
+            return 1
+        finally:
+            # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
+            if 'mycursor' in locals():
+                mycursor.close()
+            if 'mydb' in locals():
+                mydb.close()
 
     #Save tunas in DB. TESTED
     # ideas from here https://www.w3schools.com/python/python_mysql_insert.asp
@@ -537,12 +542,13 @@ class Data(object):
         """
         Method saves current tunas into MySQL 'records' DB.
         May show GUI error in case of error
-        :return: None
+        :return: int 0 - all ok, 1 - error
+        :rtype: int
 
         Method: save_tunas_in_db
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         # Open DB
@@ -562,14 +568,15 @@ class Data(object):
                 mycursor.execute(sql, val)
             # Commit transaction
             mydb.commit()
-            # print(mycursor.rowcount, "record inserted.")
-            mycursor.close()
-            mydb.close()
+            return 0
         except Exception as error:
-            messagebox.showerror("MySQL SAVING ERROR",
-                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
-            mycursor.close()
-            mydb.close()
+            return 1
+        finally:
+            # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
+            if 'mycursor' in locals():
+                mycursor.close()
+            if 'mydb' in locals():
+                mydb.close()
 
     # Tunas loader from DB. TESTED
     def read_tunas_from_db(self):
@@ -580,7 +587,7 @@ class Data(object):
         Method: read_tunas_from_db
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         try:
@@ -611,11 +618,11 @@ class Data(object):
                 tuna = Tuna()
                 tuna.setTunaFeatures(list(x))
                 Data.tunas.append(tuna)
-
         except Exception:
             messagebox.showerror("MySQL READING ERROR",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
             Data.tunas = []
+            return 1
         finally:
             # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
             if 'mycursor' in locals():
@@ -626,6 +633,7 @@ class Data(object):
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        return 0
 
 # Second GUI Starter
 class SecondScreen(object):
@@ -903,7 +911,15 @@ class SecondScreen(object):
         if filename is None or filename == '':
             # Return if Cancel is pressed
             return
-        Data.tunas_saver(filename)
+        x = Data.tunas_saver(filename)
+        #Printing return messageboxes: 0 - ok, 1 - error
+        if x == 0:
+            messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("FILE SAVING ERROR",
+                             "There was an ERROR during saving\nPlease press OK and repeat saving")
+            return
+
         # Useless loop for looping demo by Nikolay Melnik
         c = 0
         while c < 5:
@@ -964,8 +980,74 @@ class SecondScreen(object):
         self.list_panel(self.frame_bottom1)
         self.boxes_clear()
 
-    ### Buttons callbacks
+    def save_to_db(self):
+        """
+        Call back method is run when user chooses 'Save to Database' in File menu
+        Does not take any parameters. Does not return any. Saves data into DB and prompts success or failure
+        :return: None
 
+        Method: save_to_db
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        # Creating table
+        x = Data.db_create_table(self)
+        # Saving to db
+        y = Data.save_tunas_in_db(self)
+        # Check for errors
+        if x == 0 and y == 0:
+            messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved to Database\nPlease press OK to continue")
+        else:
+            messagebox.showerror("MySQL SAVING ERROR",
+                                 "There was an ERROR during saving to Database\nPlease press OK and repeat saving")
+
+    def load_from_db(self):
+        """
+        Call back method is run when user chooses 'Load from Database' in File menu
+        Does not take any parameters. Does not return any. Loads data from DB as a new data set
+        :return: None
+
+        Method: load_from_db
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        #Delete all Tunas
+        Data.tunas = []
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+        # Loading data from the Database
+        x = Data.read_tunas_from_db(self)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("MySQL READING ERROR",
+                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
+        # If no tunas loaded - exit
+        if len(Data.tunas) < 1:
+            return
+        # Cleaning GUI boxes
+        self.boxes_clear()
+
+        #Default values for boxes just to make sure that there is no repetition
+        Data.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+    # ********* GUI Buttons callbacks *********
     #Create button pressed
     def create_button(self):
         """
@@ -1149,7 +1231,7 @@ class SecondScreen(object):
         self.list_panel(self.frame_bottom1)
 
     #Second screen Constructor
-    def __init__(self):
+    def __init__(self, master):
         """
         This constructor is responsible for creation of the second window GUI. It creates windows,
         pack them with widgets and assigns call back functions
@@ -1161,7 +1243,7 @@ class SecondScreen(object):
         Python Version: 3.7
         """
 
-        self.root = Tk()
+        self.root = master
         #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
         self.root.option_add('*tearOff', False)
         menubar = Menu(self.root)
@@ -1173,8 +1255,8 @@ class SecondScreen(object):
         file.add_command(label='Open File')
         file.add_command(label='Save File', command=self.save_file_button)
         file.add_separator()
-        file.add_command(label='Load from Database')
-        file.add_command(label='Save to Database')
+        file.add_command(label='Load from Database', command=self.load_from_db)
+        file.add_command(label='Save to Database', command=self.save_to_db)
         file.add_separator()
         file.add_command(label='Exit', command=lambda: self.root.destroy())
 
@@ -1195,8 +1277,8 @@ class SecondScreen(object):
         Data.analyzeTuna()
         Data.currentUOM = 'Litres per person, per year'
         Data.currentData = Data.analyzedTunasLitres
+        # Set data for graphs and comboboxes
         self.keysList = list(Data.currentData.keys())
-        Data.currentKey = self.keysList[0]
 
         #Printing Graph
         self.printGraph(self.frame_top)
@@ -1275,7 +1357,14 @@ class SecondScreen(object):
         self.comm = ttk.Combobox(self.frame_top, textvariable=keepvalue2, width=60, values=self.keysList)
         self.comm.state(['readonly'])
         self.comm.bind('<<ComboboxSelected>>', changeComm)
-        self.comm.current(0)
+
+        self.comm['values'] = self.keysList
+        if len(self.keysList) < 1:
+            self.comm.set('')
+        else:
+            self.comm.current(0)
+
+        #self.comm.current(0)
         self.comm.grid(row=3, column=3, sticky="w")
         # x= list(Data.analyzedTunasLitres.keys())
 
@@ -1451,16 +1540,28 @@ class FirstScreen(object):
         if filename is None: return  # Return if Cancel is pressed
 
         #Load file and process Tunas
-        Data.tunas_loader(filename.name)
+        x = Data.tunas_loader(filename.name)
+        #Throwing messages according to returned results: 0 -ok, 1 - load error, 2 - corrupted file
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x ==1:
+            messagebox.showerror("FILE READING ERROR",
+                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        elif x ==2:
+            messagebox.showerror("FILE READING ERROR",
+                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
+            return
 
-        # Return if no Tunas loaded
+# Return if no Tunas loaded
         if len(Data.tunas) == 0:
             return
 
         # Destroying window
         self.master.destroy()
         #Call for second screen
-        SecondScreen()
+        root = Tk()
+        SecondScreen(root)
 
     def secondButton(self):
         """
@@ -1476,14 +1577,20 @@ class FirstScreen(object):
         """
         # print('Button 2 pressed')
         # Loading data from the Database
-        Data.read_tunas_from_db(self)
+        x = Data.read_tunas_from_db(self)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("MySQL READING ERROR",
+                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
         # If no tunas loaded - exit
         if len(Data.tunas) < 1:
             return
         # Destroying window
         self.master.destroy()
         #Call for second screen
-        SecondScreen()
+        root = Tk()
+        SecondScreen(root)
 
     def thirdButton(self):
         """
