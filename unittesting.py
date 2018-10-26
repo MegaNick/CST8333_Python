@@ -6,6 +6,8 @@
     Works with major module - MAJOR.py by Nikolay Melnik
     Ottawa, ON Canada. September-December 2018
 """
+import _tkinter
+import tkinter
 
 """
 CST8333 18F (350, 351) Dataset Attribution
@@ -44,6 +46,8 @@ class TestTuna(unittest.TestCase):
         """
         print('Starting test #', TestTuna.counter)
         TestTuna.counter = TestTuna.counter + 1
+        self.root = tkinter.Tk()
+        self.pump_events()
 
     def tearDown(self):
         """
@@ -57,6 +61,14 @@ class TestTuna(unittest.TestCase):
         Python Version: 3.7
         """
         print('Finished. Tests prepared by Nikolay Melnik')
+        if self.root:
+            self.root.destroy()
+            self.pump_events()
+
+    def pump_events(self):
+        while self.root.dooneevent(_tkinter.ALL_EVENTS | _tkinter.DONT_WAIT):
+            pass
+            pass
 
     def test_Tuna(self):
         """
@@ -132,7 +144,9 @@ class TestTuna(unittest.TestCase):
         path = 'c:/temp/test.csv'
         #Create Header
         #Data must be in special format
-        array = ['a','GEO','DGUID','d','e','f','aa', 'bb', 'cc', 'dd', 'ee', 'ff', 'aaa', 'bbb', 'ccc', 'ddd']
+        array = ['REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
+                        'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED',
+                        'DECIMALS']
         array2 = ['0','1','2','3','4',"5,5",'6','7','8','9','a','b','c','d','e','f']
 
         tuna = Tuna()
@@ -145,16 +159,16 @@ class TestTuna(unittest.TestCase):
         Data.tunas = []
         Data.tunas.append(x)
         #Saving file
-        Data.tunas_saver(path)
+        self.assertEqual(Data.tunas_saver(path),0)
 
         #Checking loading
         Data.tunasHeader = Tuna()
         Data.tunas = []
-        Data.tunas_loader(path)
-        x=Data.tunasHeader
+        self.assertEqual(Data.tunas_loader(path),0)
+        x = Data.tunas[0]
         z = x.getTunaFeatures
         #Check 2 arrays at once https://stackoverflow.com/questions/1663807/how-to-iterate-through-two-lists-in-parallel
-        for x, y in zip (z, array):
+        for x, y in zip (z, array2):
              self.assertEqual(x, y)
         os.remove(path)
 
@@ -306,6 +320,33 @@ class TestTuna(unittest.TestCase):
         self.assertEqual(Data.tunas[5].VALUE, '100')
 
     # Testing
+    def test_something(self):
+        Data.tunas = []
+        s = SecondScreen(self.root)
+#        self.pump_events()
+
+        s.en_refDate.set(1960)
+        s.food_avail.current(0)
+        s.en_commodity.set('test')
+        s.uom_sel.current(0)
+        s.en_uomid.set('aaa')
+        s.scal_sel.current(0)
+        s.en_scalarid.set('bbb')
+        s.en_vector.set('ccc')
+        s.en_coordinate.set('ddd')
+        s.en_value.set('eee')
+        s.en_status.set('fff')
+        s.en_symbol.set('ggg')
+        s.en_terminated.set('hhh')
+        s.en_decimals.set('iii')
+
+#        self.pump_events()
+        s.create_button()
+        array = ['1960', 'Canada', '2016A000011124', 'Food available', 'test', 'Litres per person, per year', 'aaa', 'Units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
+        z = Data.tunas[0].getTunaFeatures
+        for x, y in zip (z, array):
+             self.assertEqual(x, y)
+
 
 if __name__ == '__main__':
     unittest.main()

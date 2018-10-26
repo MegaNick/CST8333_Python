@@ -6,6 +6,8 @@
     Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
 """
+
+
 __version__ = "1.0"
 __author__ = "Nikolay Melnik (id-040874855)"
 
@@ -34,6 +36,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # Simple import by Nikolay Melnik
+import csv
 import mysql.connector
 
 class TunaSkeleton(metaclass=ABCMeta):
@@ -307,8 +310,6 @@ class Data(object):
     MySQL credentials: ('host', 'port', 'user', 'passwd', 'db')
     """
 
-
-
     #Loading CSV file by Nikolay Melnik. TESTED
     def tunas_loader(x=''):
         """
@@ -322,45 +323,34 @@ class Data(object):
         Method: tunas_loader
         Author: Nikolay Melnik
         Date created: 10/9/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         # Loading file with WITH statement by Nikolay Melnik (abridged!)
+        tunas = []
         try:
-            with open(x) as f:
-                #Primitive int assignment by Nikolay Melnik
+            with open(x, 'r') as f:
+
+                dialect = csv.Sniffer().sniff(f.read(1024))
+                f.seek(0)
+                reader = csv.reader(f, dialect)
                 count = 0
-                for line in f:
-
-                    # If file has bad zeros - 0x00 or bad characters above 0x80. We need to get rid of them as well as from \n and "
-                    a = ""
-                    #Decision structures by Nikolay Melnik
-                    for x in line:
-                        if x < ' ':
-                            if x != '\t':
-                                continue
-                        elif x >= '\x80':
-                            continue
-                        elif x == '"':
-                            continue
-                        a = a + x
-
-                    # a is clean, do split
-                    b = a.split(',')
+                for x in reader:
+                    temp = []
+                    for z in x:
+                        # ASCII filter from https://stackoverflow.com/questions/40872126/python-replace-non-ascii-character-in-string/40872225
+                        z = re.sub(r'[^\x20-\x7f]',r'', z)
+                        z = z.replace('"','')
+                        temp.append(z)
 
                     # Are we processing correct file?
                     if count == 0:
-                        if (b[1] != 'GEO') or (b[2] != 'DGUID'):
+                        if (temp[1] != 'GEO') or (temp[2] != 'DGUID'):
                             raise LoadError("Data set is corrupted or not specified")
 
-                    #If it is the first line combine together columns 5 and 6
-                    if count > 0:
-                        b[5] = b[5] + ',' + b[6]
-                        b.pop(6)
-
-                    # if a contains 16 elements, we are good, if not, do next
-                    if len(b) != 16:
-                        continue
+                    # if a contains 16 elements, we are good, if not, rise exception
+                    if len(temp) != 16:
+                        raise LoadError("Data set is corrupted or not specified")
 
                     #Math by Nikolay Melnik
                     count = count + 1
@@ -368,9 +358,8 @@ class Data(object):
                     # Create Tuna object by Nikolay Melnik
                     tuna = Tuna()
                     # Using object's methods by Nikolay Melnik
-                    tuna.setTunaFeatures(b)
-                    # Access class variables by Nikolay Melnik
-                    Data.tunas.append(tuna)
+                    tuna.setTunaFeatures(temp)
+                    tunas.append(tuna)
 
         except IOError:
             # If loading failed
@@ -378,13 +367,16 @@ class Data(object):
         except LoadError:
             # If data corrupted
             return 2
-        Data.tunasHeader = Data.tunas[0]
+        # If all ok - continue
+        Data.tunas = tunas
+        Data.tunasHeader = tunas[0]
         Data.tunas.pop(0)
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         # If all ok
         return 0
+
 
     #Saving tunas to CSV by Nikolay Melnik. TESTED
     @staticmethod
@@ -402,34 +394,17 @@ class Data(object):
         Date last modified: 10/25/2018
         Python Version: 3.7
         """
-
-        def compactor(y=Tuna):
-            """
-            Nested method takes Tuna and returns a String of CSV coded Tuna
-            :param y: Tuna object to be compacted into CSV style
-            :return: String of CSV Tuna
-            """
-            line = ""
-            t = y.getTunaFeatures
-            # Local variable introduction by Nikolay Melnik
-            count = 0
-            for z in t:
-                line = line + z
-                if count < 15:
-                    line = line + ','
-                # Variable participating in calculation by Nikolay Melnik
-                count = count + 1
-            line = line + '\n'
-            return line
-
-        #Open file for processing. Some ideas are form here https://www.w3schools.com/python/python_file_write.asp
+        #Open file for processing. Some ideas are form here https://www.pythonforbeginners.com/csv/using-the-csv-module-in-python
         # Simple file writing and exception handling by Nikolay Melnik
         try:
-            f = open(name, "w")
-            f.write(compactor(Data.tunasHeader))
+            f = open(name, "w", newline='')
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            writer.writerow(['REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
+                        'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED',
+                        'DECIMALS'])
             for tuna in Data.tunas:
-                f.write(compactor(tuna))
-        except IOError:
+                writer.writerow(tuna.getTunaFeatures)
+        except IOError as error:
             return 1
         finally:
             # If variable 'f' - file exists, close it
@@ -518,7 +493,7 @@ class Data(object):
                         'DECIMALS']
             count = 0
             for y in x:
-                sql = sql+'`'+y+'`'+' VARCHAR(50)'
+                sql = sql+'`'+y+'`'+' VARCHAR(100)'
                 # add comma if not the last block
                 if count <15:
                     sql = sql + ','
@@ -590,6 +565,7 @@ class Data(object):
         Date last modified: 10/25/2018
         Python Version: 3.7
         """
+        tunas = []
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
@@ -598,7 +574,6 @@ class Data(object):
                 passwd=Data.db_info[3],
                 database=Data.db_info[4]
             )
-            Data.tunas = []
             mycursor = mydb.cursor()
             #Receive Header names
             tuna = Tuna()
@@ -617,11 +592,10 @@ class Data(object):
             for x in myresult:
                 tuna = Tuna()
                 tuna.setTunaFeatures(list(x))
-                Data.tunas.append(tuna)
+                tunas.append(tuna)
         except Exception:
             messagebox.showerror("MySQL READING ERROR",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
-            Data.tunas = []
             return 1
         finally:
             # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
@@ -629,7 +603,8 @@ class Data(object):
                 mycursor.close()
             if 'mydb' in locals():
                 mydb.close()
-
+        # If all ok - continue
+        Data.tunas = tunas
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
@@ -1015,14 +990,6 @@ class SecondScreen(object):
         Date last modified: 10/25/2018
         Python Version: 3.7
         """
-        #Delete all Tunas
-        Data.tunas = []
-        Data.currentData = {}
-        Data.currentUOM = 'Litres per person, per year'
-        self.keysList = []
-        Data.currentKey = ""
-        self.comm['values'] = self.keysList
-        self.comm.set('')
         # Loading data from the Database
         x = Data.read_tunas_from_db(self)
         if x == 0:
@@ -1031,10 +998,74 @@ class SecondScreen(object):
             messagebox.showerror("MySQL READING ERROR",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
         # If no tunas loaded - exit
-        if len(Data.tunas) < 1:
-            return
+        # if len(Data.tunas) < 1:
+        #     return
         # Cleaning GUI boxes
         self.boxes_clear()
+        #Delete all Tunas
+        # Data.tunas = []
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+
+        #Default values for boxes just to make sure that there is no repetition
+        Data.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+    def open_file(self):
+        """
+        Call back method is run when user chooses 'Open File' in File menu
+        Does not take any parameters. Does not return any. Loads data from file as a new data set
+        :return: None
+
+        Method: open_file
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        # Call filechooser
+        filename = filedialog.askopenfile(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
+        if filename is None: return  # Return if Cancel is pressed
+
+        #Load file and process Tunas
+        x = Data.tunas_loader(filename.name)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("FILE READING ERROR",
+                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        elif x == 2:
+            messagebox.showerror("FILE READING ERROR",
+                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
+            return
+
+        # # Return if no Tunas loaded
+        # if len(Data.tunas) == 0:
+        #     return
+        # Cleaning GUI boxes
+        self.boxes_clear()
+
+        #Delete all Tunas
+        # Data.tunas = []
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
 
         #Default values for boxes just to make sure that there is no repetition
         Data.analyzeTuna()
@@ -1046,6 +1077,7 @@ class SecondScreen(object):
         self.printGraph(self.frame_top)
         #Refresh List
         self.list_panel(self.frame_bottom1)
+
 
     # ********* GUI Buttons callbacks *********
     #Create button pressed
@@ -1252,7 +1284,7 @@ class SecondScreen(object):
         menubar.add_cascade(menu=file, label='File')
         file.add_command(label='New File', command=self.new_file)
         file.add_separator()
-        file.add_command(label='Open File')
+        file.add_command(label='Open File', command=self.open_file)
         file.add_command(label='Save File', command=self.save_file_button)
         file.add_separator()
         file.add_command(label='Load from Database', command=self.load_from_db)
@@ -1279,9 +1311,6 @@ class SecondScreen(object):
         Data.currentData = Data.analyzedTunasLitres
         # Set data for graphs and comboboxes
         self.keysList = list(Data.currentData.keys())
-
-        #Printing Graph
-        self.printGraph(self.frame_top)
 
         ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0, columnspan=4, pady=5)
         ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=2, column=0, columnspan=4, pady=10)
@@ -1367,6 +1396,9 @@ class SecondScreen(object):
         #self.comm.current(0)
         self.comm.grid(row=3, column=3, sticky="w")
         # x= list(Data.analyzedTunasLitres.keys())
+        #Printing Graph
+        Data.currentKey = self.comm.get()
+        self.printGraph(self.frame_top)
 
         #Second Part of the screen, 2nd frame Constructing
         # Forming Top Frame
