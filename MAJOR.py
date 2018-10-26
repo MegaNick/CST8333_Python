@@ -6,7 +6,9 @@
     Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
 """
-
+import threading
+import datetime
+import time
 
 __version__ = "1.0"
 __author__ = "Nikolay Melnik (id-040874855)"
@@ -610,6 +612,56 @@ class Data(object):
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         return 0
 
+    # Program stopwatch. Multithreading example by Nikolay Melnik
+class Stopwatch(threading.Thread):
+    """
+    Multithreading class. Counts time and changing GUI according to System time.
+
+    Class: Stopwatch
+    Extends: threading.Thread
+    Author: Nikolay Melnik
+    Date created: 10/22/2018
+    Date last modified: 10/26/2018
+    Python Version: 3.7
+    """
+
+    def __init__(self, master):
+        """
+        This constructor prepares a thread for time calculation during GUI work
+        :param: master: Reference to StringVar object representing Label in GUI to be displayed
+        :return: None
+        :type: StringVar:
+
+        Method: __init__ (Constructor)
+        Author: Nikolay Melnik
+        Date created: 10/22/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        threading.Thread.__init__(self)
+        self.clock = datetime.datetime.now()
+        self.master = master
+
+    def run(self):
+        """
+        Overridden methods which continuously perform time calculation since program started and updates GUI
+        :return: None
+
+        Method: run
+        Author: Nikolay Melnik
+        Date created: 10/22/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        while (True):
+            # calculate difference from start until now and print it in the Label
+            x = str(datetime.datetime.now() - self.clock)
+            self.master.set('Program run time:'+x)
+            time.sleep(0.1)
+
+
+
+
 # Second GUI Starter
 class SecondScreen(object):
     """
@@ -682,7 +734,7 @@ class SecondScreen(object):
         ax.grid()
         canvas = FigureCanvasTkAgg(fig, master)
         canvas.draw()
-        canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
+        canvas.get_tk_widget().grid(row=3, column=0, columnspan=4, pady=10)
 
     ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     ### Adjusted fot This final project
@@ -1312,10 +1364,14 @@ class SecondScreen(object):
         # Set data for graphs and comboboxes
         self.keysList = list(Data.currentData.keys())
 
-        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0, columnspan=4, pady=5)
-        ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=2, column=0, columnspan=4, pady=10)
-        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=3, column=2, sticky="w",pady=10)
-        ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=3, column=0, sticky="w", pady=10)
+        self.timeLabel = StringVar()
+        #timeLabelValue = self.timeLabel.get()
+        self.timeLabel.set('Program run time:0000')
+        ttk.Label(self.frame_top, textvariable=self.timeLabel).grid(row=0, column=0, columnspan=4, pady=5)
+        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=2, column=0, columnspan=4, pady=5)
+        ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=4, column=0, columnspan=4, pady=10)
+        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=5, column=2, sticky="w",pady=10)
+        ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=5, column=0, sticky="w", pady=10)
 
 
         #Callback method for UOM box
@@ -1361,7 +1417,7 @@ class SecondScreen(object):
         self.choice.state(['readonly'])
         self.choice.bind('<<ComboboxSelected>>', changeUOM)
         self.choice.current(0)
-        self.choice.grid(row=3, column=1, sticky="w", pady=10)
+        self.choice.grid(row=5, column=1, sticky="w", pady=10)
 
         #Callback method for Commodity box
         def changeComm(event):
@@ -1394,7 +1450,7 @@ class SecondScreen(object):
             self.comm.current(0)
 
         #self.comm.current(0)
-        self.comm.grid(row=3, column=3, sticky="w")
+        self.comm.grid(row=5, column=3, sticky="w")
         # x= list(Data.analyzedTunasLitres.keys())
         #Printing Graph
         Data.currentKey = self.comm.get()
@@ -1498,12 +1554,16 @@ class SecondScreen(object):
 
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
-        ttk.Button(self.frame_bottom5, text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_create', text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
         ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
         ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
         #Show treeview on screen
         self.list_panel(self.frame_bottom1)
+
+        #Initializing timer
+        thread = Stopwatch(self.timeLabel)
+        thread.start()
 
 # First GUI Starter
 class FirstScreen(object):

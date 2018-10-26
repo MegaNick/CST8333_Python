@@ -46,8 +46,8 @@ class TestTuna(unittest.TestCase):
         """
         print('Starting test #', TestTuna.counter)
         TestTuna.counter = TestTuna.counter + 1
-        self.root = tkinter.Tk()
-        self.pump_events()
+
+        # self.pump_events()
 
     def tearDown(self):
         """
@@ -61,9 +61,6 @@ class TestTuna(unittest.TestCase):
         Python Version: 3.7
         """
         print('Finished. Tests prepared by Nikolay Melnik')
-        if self.root:
-            self.root.destroy()
-            self.pump_events()
 
     def pump_events(self):
         while self.root.dooneevent(_tkinter.ALL_EVENTS | _tkinter.DONT_WAIT):
@@ -320,11 +317,23 @@ class TestTuna(unittest.TestCase):
         self.assertEqual(Data.tunas[5].VALUE, '100')
 
     # Testing
-    def test_something(self):
-        Data.tunas = []
-        s = SecondScreen(self.root)
-#        self.pump_events()
+    def test_create_button(self):
+        """
+        Testing Method Checks "Create Button" functionality by creating mock entry and comparing it after processing
+        Using Tkinter instance without root.mainloop()
+        :return: None
 
+        Test Method: test_create_button
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        Data.tunas = []
+        #Creating an instance of second screen but NO CALL to maninloop
+        self.root = tkinter.Tk()
+        s = SecondScreen(self.root)
+        # Populating user entry boxes with mock data
         s.en_refDate.set(1960)
         s.food_avail.current(0)
         s.en_commodity.set('test')
@@ -339,14 +348,17 @@ class TestTuna(unittest.TestCase):
         s.en_symbol.set('ggg')
         s.en_terminated.set('hhh')
         s.en_decimals.set('iii')
-
-#        self.pump_events()
-        s.create_button()
+        # Mocking "Create button" click. Idea - http://code.activestate.com/recipes/578978-using-tkinters-invoke-method-for-testing/
+        s.frame_bottom5.children['but_create'].invoke()
+        # Mocked data as an array
         array = ['1960', 'Canada', '2016A000011124', 'Food available', 'test', 'Litres per person, per year', 'aaa', 'Units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
+        # Compare fresh Tuna with mocked data
         z = Data.tunas[0].getTunaFeatures
         for x, y in zip (z, array):
-             self.assertEqual(x, y)
-
+            # Must be equal. If not - error
+            self.assertEqual(x, y)
+        if self.root:
+            self.root.destroy()
 
 if __name__ == '__main__':
     unittest.main()
