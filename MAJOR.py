@@ -1166,7 +1166,7 @@ class SecondScreen(object):
         #Refresh List
         self.list_panel(self.frame_bottom1)
 
-    #Update Button pressed
+    #Update Button pressed. TESTED
     def update_button(self):
         """
         Call back method when user clicks 'Update entry' button
