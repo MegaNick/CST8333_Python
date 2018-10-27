@@ -316,19 +316,20 @@ class TestTuna(unittest.TestCase):
         self.assertEqual(Data.tunas[4].VALUE, '30')
         self.assertEqual(Data.tunas[5].VALUE, '100')
 
-    # Testing
-    def test_create_button(self):
-        """
-        Testing Method Checks "Create Button" functionality by creating mock entry and comparing it after processing
-        Using Tkinter instance without root.mainloop()
-        :return: None
 
-        Test Method: test_create_button
+    def populate_gui(self):
+        """
+        Support method creates GUI and populates it with predefined data
+        :return: Tuple of (Tkinter root, Second screen class)
+        :rtype: tuple
+
+        Method: populate_gui
         Author: Nikolay Melnik
         Date created: 10/26/2018
         Date last modified: 10/26/2018
         Python Version: 3.7
         """
+
         Data.tunas = []
         #Creating an instance of second screen but NO CALL to maninloop
         self.root = tkinter.Tk()
@@ -348,10 +349,30 @@ class TestTuna(unittest.TestCase):
         s.en_symbol.set('ggg')
         s.en_terminated.set('hhh')
         s.en_decimals.set('iii')
+        # The same thing in array
+        array = ['1960', 'Canada', '2016A000011124', 'Food available', 'test', 'Litres per person, per year', 'aaa',
+                 'Units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
+        #Returns Tuple of (Tkinter root, Second screen class, array of model)
+        return (self.root, s, array)
+
+    # Testing create button
+    def test_create_button(self):
+        """
+        Testing Method Checks "Create Button" functionality by creating mock entry and comparing it after processing
+        Using Tkinter instance without root.mainloop()
+        :return: None
+
+        Test Method: test_create_button
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        self.root, s, array = self.populate_gui()
         # Mocking "Create button" click. Idea - http://code.activestate.com/recipes/578978-using-tkinters-invoke-method-for-testing/
         s.frame_bottom5.children['but_create'].invoke()
         # Mocked data as an array
-        array = ['1960', 'Canada', '2016A000011124', 'Food available', 'test', 'Litres per person, per year', 'aaa', 'Units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
+
         # Compare fresh Tuna with mocked data
         z = Data.tunas[0].getTunaFeatures
         for x, y in zip (z, array):

@@ -612,56 +612,6 @@ class Data(object):
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         return 0
 
-    # Program stopwatch. Multithreading example by Nikolay Melnik
-class Stopwatch(threading.Thread):
-    """
-    Multithreading class. Counts time and changing GUI according to System time.
-
-    Class: Stopwatch
-    Extends: threading.Thread
-    Author: Nikolay Melnik
-    Date created: 10/22/2018
-    Date last modified: 10/26/2018
-    Python Version: 3.7
-    """
-
-    def __init__(self, master):
-        """
-        This constructor prepares a thread for time calculation during GUI work
-        :param: master: Reference to StringVar object representing Label in GUI to be displayed
-        :return: None
-        :type: StringVar:
-
-        Method: __init__ (Constructor)
-        Author: Nikolay Melnik
-        Date created: 10/22/2018
-        Date last modified: 10/26/2018
-        Python Version: 3.7
-        """
-        threading.Thread.__init__(self)
-        self.clock = datetime.datetime.now()
-        self.master = master
-
-    def run(self):
-        """
-        Overridden methods which continuously perform time calculation since program started and updates GUI
-        :return: None
-
-        Method: run
-        Author: Nikolay Melnik
-        Date created: 10/22/2018
-        Date last modified: 10/26/2018
-        Python Version: 3.7
-        """
-        while (True):
-            # calculate difference from start until now and print it in the Label
-            x = str(datetime.datetime.now() - self.clock)
-            self.master.set('Program run time:'+x)
-            time.sleep(0.1)
-
-
-
-
 # Second GUI Starter
 class SecondScreen(object):
     """
@@ -682,6 +632,23 @@ class SecondScreen(object):
     """Class variable responsible for ascending/descending style of treeview
         true - ascending, false - descending        
     """
+
+    def run_clocks(self):
+        """
+        Method shows elapsed program time in seconds. Run as Tkinter thread.
+        Restarts itself every second, synchronize itself with system clock
+        :return: None
+
+        Method: run_clocks
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        # calculate difference from start until now and print it in the Label
+        x = str(int((datetime.datetime.now() - self.clock).total_seconds()))
+        self.timeLabel.set('Program run time:'+x)
+        self.root.after(1, self.run_clocks)
 
     # printing graph data
     def printGraph(self, master):
@@ -1132,7 +1099,7 @@ class SecondScreen(object):
 
 
     # ********* GUI Buttons callbacks *********
-    #Create button pressed
+    #Create button pressed. TESTED
     def create_button(self):
         """
         Call back method when user clicks 'Create new entry' button
@@ -1326,7 +1293,6 @@ class SecondScreen(object):
         Date last modified: 10/18/2018
         Python Version: 3.7
         """
-
         self.root = master
         #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
         self.root.option_add('*tearOff', False)
@@ -1365,7 +1331,6 @@ class SecondScreen(object):
         self.keysList = list(Data.currentData.keys())
 
         self.timeLabel = StringVar()
-        #timeLabelValue = self.timeLabel.get()
         self.timeLabel.set('Program run time:0000')
         ttk.Label(self.frame_top, textvariable=self.timeLabel).grid(row=0, column=0, columnspan=4, pady=5)
         ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=2, column=0, columnspan=4, pady=5)
@@ -1562,8 +1527,11 @@ class SecondScreen(object):
         self.list_panel(self.frame_bottom1)
 
         #Initializing timer
-        thread = Stopwatch(self.timeLabel)
-        thread.start()
+        #Taking current system time
+        self.clock = datetime.datetime.now()
+        self.run_clocks()
+
+
 
 # First GUI Starter
 class FirstScreen(object):
