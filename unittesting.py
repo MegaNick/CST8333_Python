@@ -62,10 +62,29 @@ class TestTuna(unittest.TestCase):
         """
         print('Finished. Tests prepared by Nikolay Melnik')
 
-    def pump_events(self):
-        while self.root.dooneevent(_tkinter.ALL_EVENTS | _tkinter.DONT_WAIT):
-            pass
-            pass
+    def test_classes(self):
+        """
+        Test methods checks two classes FirstScreen and SecondScreen for integrity. Creates them and checks for null
+        :return: None
+
+        Test Method: test_classes
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        self.root = tkinter.Tk()
+        x = FirstScreen(self.root)
+        self.assertIsNotNone(x)
+        if self.root:
+            self.root.destroy()
+        x = None
+        self.root = tkinter.Tk()
+        y = SecondScreen(self.root)
+        self.assertIsNotNone(y)
+        if self.root:
+            self.root.destroy()
+        y = None
 
     def test_Tuna(self):
         """
@@ -375,6 +394,95 @@ class TestTuna(unittest.TestCase):
 
         # Compare fresh Tuna with mocked data
         z = Data.tunas[0].getTunaFeatures
+        for x, y in zip (z, array):
+            # Must be equal. If not - error
+            self.assertEqual(x, y)
+        if self.root:
+            self.root.destroy()
+
+   # Testing delete button
+    def test_delete_button(self):
+        """
+        Testing Method "presses" Create button with populated data, then focus on the first line in the treeview
+        and then "presses" delete button
+        Using Tkinter instance without root.mainloop()
+        :return: None
+
+        Test Method: test_delete_button
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        self.root, s, array = self.populate_gui()
+        # Mocking "Create button" click. Idea - http://code.activestate.com/recipes/578978-using-tkinters-invoke-method-for-testing/
+        s.frame_bottom5.children['but_create'].invoke()
+        # Mocked data as an array
+
+        # Compare fresh Tuna with mocked data
+        z = Data.tunas[0].getTunaFeatures
+        for x, y in zip (z, array):
+            # Must be equal. If not - error
+            self.assertEqual(x, y)
+         # Setting focus
+        s.tree.focus(0)
+        # "Press" Delete entry button
+        s.frame_bottom5.children['but_delete'].invoke()
+        # After deletion, tunas length should be 0
+        self.assertEqual(len(Data.tunas), 0)
+        if self.root:
+            self.root.destroy()
+
+   # Testing update button
+    def test_update_button(self):
+        """
+        Testing Method "presses" Create button with populated data, then focus on the first line in the treeview
+        and then "presses" update button with modified entry. Checks for integrity
+        Using Tkinter instance without root.mainloop()
+        :return: None
+
+        Test Method: test_update_button
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        self.root, s, array = self.populate_gui()
+        # Mocking "Create button" click. Idea - http://code.activestate.com/recipes/578978-using-tkinters-invoke-method-for-testing/
+        s.frame_bottom5.children['but_create'].invoke()
+        # Mocked data as an array
+
+        # Compare fresh Tuna with mocked data
+        z = Data.tunas[0].getTunaFeatures
+        for x, y in zip (z, array):
+            # Must be equal. If not - error
+            self.assertEqual(x, y)
+         # Setting focus
+        s.tree.focus(0)
+         # Setting focus
+        s.tree.focus(0)
+        # Mocking new data
+        s.en_refDate.set(1961)
+        s.food_avail.current(0)
+        s.en_commodity.set('aaa')
+        s.uom_sel.current(0)
+        s.en_uomid.set('bbb')
+        s.scal_sel.current(0)
+        s.en_scalarid.set('ccc')
+        s.en_vector.set('ddd')
+        s.en_coordinate.set('eee')
+        s.en_value.set('fff')
+        s.en_status.set('ggg')
+        s.en_symbol.set('hhh')
+        s.en_terminated.set('iii')
+        s.en_decimals.set('jjj')
+        # The same thing in array
+        array = ['1961', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year', 'bbb',
+                 'Units', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj']
+        # "Press" Update entry button
+        s.frame_bottom5.children['but_update'].invoke()
+        z = Data.tunas[0].getTunaFeatures
+        # Compare after update
         for x, y in zip (z, array):
             # Must be equal. If not - error
             self.assertEqual(x, y)

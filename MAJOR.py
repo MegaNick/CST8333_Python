@@ -1239,7 +1239,7 @@ class SecondScreen(object):
         #Refresh List
         self.list_panel(self.frame_bottom1)
 
-    #Delete button
+    #Delete button. TESTED
     def button_delete(self):
         """
         Call back method when user clicks 'Delete entry' button
@@ -1520,8 +1520,8 @@ class SecondScreen(object):
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
         ttk.Button(self.frame_bottom5, name='but_create', text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
-        ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
-        ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_update', text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_delete', text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
         #Show treeview on screen
         self.list_panel(self.frame_bottom1)
