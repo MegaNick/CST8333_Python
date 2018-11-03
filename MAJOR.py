@@ -245,7 +245,7 @@ class Tuna(TunaSkeleton):
              self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS))
         return x
 
-# Custom Exception about bad loading
+# Custom Exception about bad loading by Nikolay Melnik
 class LoadError(Exception):
     """
     This class is a template for a custom exception
@@ -1311,8 +1311,8 @@ class SecondScreen(object):
         file.add_command(label='Exit', command=lambda: self.root.destroy())
 
         # Second screen styling
-        # Not resizable screen
-        self.root.resizable(False, False)
+        # Not resizable screen - resizeable only horizontally
+        self.root.resizable(True, False)
         self.root.geometry('1500x1000+150+0')
         self.root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
