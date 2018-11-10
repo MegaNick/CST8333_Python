@@ -6,11 +6,7 @@
     Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
 """
-import threading
-import datetime
-import time
-
-__version__ = "1.0"
+__version__ = "1.5"
 __author__ = "Nikolay Melnik (id-040874855)"
 
 """
@@ -24,9 +20,8 @@ Statistics Canada. (May 30, 2018). Food available in Canada [webpage] Retrieved 
 You need to review the Open Government License which is found here: http://open.canada.ca/en/open-government-licence-canada
 """
 
-
-
 # Module imports by Nikolay Melnik
+import datetime
 from abc import ABCMeta, abstractmethod
 from tkinter import *
 # Selective import by Nikolay Melnik
@@ -40,6 +35,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # Simple import by Nikolay Melnik
 import csv
 import mysql.connector
+from _csv import Error
 
 class TunaSkeleton(metaclass=ABCMeta):
     """
@@ -264,7 +260,6 @@ class LoadError(Exception):
     def __str__(self):
         return repr(self.value)
 
-
 # Class declaration by Nikolay Melnik
 class Data(object):
     """
@@ -309,7 +304,7 @@ class Data(object):
 
     db_info = ['localhost', '3306','pytester', 'password', 'py_final_project']
     """
-    MySQL credentials: ('host', 'port', 'user', 'passwd', 'db')
+    MySQL credentials: ('host', 'port', 'user', 'passwd', 'db schema')
     """
 
     #Loading CSV file by Nikolay Melnik. TESTED
@@ -319,7 +314,7 @@ class Data(object):
         transfers it into list (array) of Tunas
         :param: String having a full filepath to CSV file
         :type: str
-        :return: int of error or succes: 0 - ok, 1- IOError, 2 - error - data corrupted. The array is put into class variable Data.tunas[]
+        :return: int of error or success: 0 - ok, 1- IOError, 2 - error - data corrupted. The array is put into class variable Data.tunas[]
         :rtype: int
 
         Method: tunas_loader
@@ -332,7 +327,7 @@ class Data(object):
         tunas = []
         try:
             with open(x, 'r') as f:
-
+                # CSV sniffer added from https://docs.python.org/2/library/csv.html
                 dialect = csv.Sniffer().sniff(f.read(1024))
                 f.seek(0)
                 reader = csv.reader(f, dialect)
@@ -368,6 +363,9 @@ class Data(object):
             return 1
         except LoadError:
             # If data corrupted
+            return 2
+        except Error:
+            # If unknown data type
             return 2
         # If all ok - continue
         Data.tunas = tunas
@@ -596,7 +594,7 @@ class Data(object):
                 tuna.setTunaFeatures(list(x))
                 tunas.append(tuna)
         except Exception:
-            messagebox.showerror("MySQL READING ERROR",
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
             return 1
         finally:
@@ -609,6 +607,7 @@ class Data(object):
         Data.tunas = tunas
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        # Implemented by Nikolay Melnik
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
         return 0
 
@@ -908,9 +907,9 @@ class SecondScreen(object):
         x = Data.tunas_saver(filename)
         #Printing return messageboxes: 0 - ok, 1 - error
         if x == 0:
-            messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
+            messagebox.showinfo("SAVING SUCCESS (by Nikolay Melnik)", "Your File was successfully saved\nPlease press OK to continue")
         elif x == 1:
-            messagebox.showerror("FILE SAVING ERROR",
+            messagebox.showerror("FILE SAVING ERROR (by Nikolay Melnik)",
                              "There was an ERROR during saving\nPlease press OK and repeat saving")
             return
 
@@ -992,9 +991,9 @@ class SecondScreen(object):
         y = Data.save_tunas_in_db(self)
         # Check for errors
         if x == 0 and y == 0:
-            messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved to Database\nPlease press OK to continue")
+            messagebox.showinfo("SAVING SUCCESS (by Nikolay Melnik)", "Your File was successfully saved to Database\nPlease press OK to continue")
         else:
-            messagebox.showerror("MySQL SAVING ERROR",
+            messagebox.showerror("MySQL SAVING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during saving to Database\nPlease press OK and repeat saving")
 
     def load_from_db(self):
@@ -1012,9 +1011,9 @@ class SecondScreen(object):
         # Loading data from the Database
         x = Data.read_tunas_from_db(self)
         if x == 0:
-            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
         elif x == 1:
-            messagebox.showerror("MySQL READING ERROR",
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
         # If no tunas loaded - exit
         # if len(Data.tunas) < 1:
@@ -1061,13 +1060,13 @@ class SecondScreen(object):
         #Load file and process Tunas
         x = Data.tunas_loader(filename.name)
         if x == 0:
-            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
         elif x == 1:
-            messagebox.showerror("FILE READING ERROR",
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading\nPlease press OK and repeat loading")
             return
         elif x == 2:
-            messagebox.showerror("FILE READING ERROR",
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
                                  "Data set is corrupted or not specified\nPlease press OK and repeat loading")
             return
 
@@ -1124,7 +1123,7 @@ class SecondScreen(object):
                 raise ValueError
         except ValueError:
             # Entry is wrong, showing error box and exits
-            messagebox.showerror("ENTRY ERROR",
+            messagebox.showerror("ENTRY ERROR (by Nikolay Melnik)",
                                  "REF_DATE must be between 1960 and 2017")
             return
         tu.append('Canada')
@@ -1196,7 +1195,7 @@ class SecondScreen(object):
                 raise ValueError
         except ValueError:
             # Entry is wrong, showing error box and exits
-            messagebox.showerror("ENTRY ERROR",
+            messagebox.showerror("ENTRY ERROR (by Nikolay Melnik)",
                                  "REF_DATE must be between 1960 and 2017")
             return
         tu.append('Canada')
@@ -1532,7 +1531,6 @@ class SecondScreen(object):
         self.run_clocks()
 
 
-
 # First GUI Starter
 class FirstScreen(object):
     """
@@ -1603,13 +1601,13 @@ class FirstScreen(object):
         x = Data.tunas_loader(filename.name)
         #Throwing messages according to returned results: 0 -ok, 1 - load error, 2 - corrupted file
         if x == 0:
-            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
         elif x ==1:
-            messagebox.showerror("FILE READING ERROR",
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading\nPlease press OK and repeat loading")
             return
         elif x ==2:
-            messagebox.showerror("FILE READING ERROR",
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
                                  "Data set is corrupted or not specified\nPlease press OK and repeat loading")
             return
 
@@ -1639,9 +1637,9 @@ class FirstScreen(object):
         # Loading data from the Database
         x = Data.read_tunas_from_db(self)
         if x == 0:
-            messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
         elif x == 1:
-            messagebox.showerror("MySQL READING ERROR",
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
         # If no tunas loaded - exit
         if len(Data.tunas) < 1:
@@ -1666,9 +1664,6 @@ class FirstScreen(object):
         """
 
         self.master.destroy()
-        # print('Button 3 pressed')
-
-
 
 ### Major function
 def main():

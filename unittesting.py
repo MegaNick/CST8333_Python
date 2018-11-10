@@ -6,7 +6,6 @@
     Works with major module - MAJOR.py by Nikolay Melnik
     Ottawa, ON Canada. September-December 2018
 """
-import _tkinter
 import tkinter
 
 """
@@ -433,7 +432,7 @@ class TestTuna(unittest.TestCase):
         if self.root:
             self.root.destroy()
 
-   # Testing update button
+   # Testing update button by Nikolay Melnik
     def test_update_button(self):
         """
         Testing Method "presses" Create button with populated data, then focus on the first line in the treeview
@@ -457,9 +456,7 @@ class TestTuna(unittest.TestCase):
         for x, y in zip (z, array):
             # Must be equal. If not - error
             self.assertEqual(x, y)
-         # Setting focus
-        s.tree.focus(0)
-         # Setting focus
+        # Setting focus
         s.tree.focus(0)
         # Mocking new data
         s.en_refDate.set(1961)
