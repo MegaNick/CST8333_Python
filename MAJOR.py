@@ -6,10 +6,22 @@
     Major module program as a partial fulfillment of the CST8333 course.
     Ottawa, ON Canada. September-December 2018
 """
-__version__ = "1.0"
+__version__ = "1.5"
 __author__ = "Nikolay Melnik (id-040874855)"
 
+"""
+CST8333 18F (350, 351) Dataset Attribution
+Attribution and License
+The dataset for use in CST8333 18F Section 350, 351 comes from the Open Government of Canada, published by Statistics Canada.
+
+You can obtain the dataset here:
+Statistics Canada. (May 30, 2018). Food available in Canada [webpage] Retrieved on August 29, 2018 from https://open.canada.ca/data/en/dataset/a683c640-b5fd-48f8-a0f1-d619b8f7e04c
+
+You need to review the Open Government License which is found here: http://open.canada.ca/en/open-government-licence-canada
+"""
+
 # Module imports by Nikolay Melnik
+import datetime
 from abc import ABCMeta, abstractmethod
 from tkinter import *
 # Selective import by Nikolay Melnik
@@ -21,7 +33,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 # Simple import by Nikolay Melnik
+import csv
 import mysql.connector
+from _csv import Error
 
 class TunaSkeleton(metaclass=ABCMeta):
     """
@@ -227,7 +241,7 @@ class Tuna(TunaSkeleton):
              self.COORDINATE, self.VALUE, self.STATUS, self.SYMBOL, self.TERMINATED, self.DECIMALS))
         return x
 
-# Custom Exception about bad loading
+# Custom Exception about bad loading by Nikolay Melnik
 class LoadError(Exception):
     """
     This class is a template for a custom exception
@@ -245,7 +259,6 @@ class LoadError(Exception):
 
     def __str__(self):
         return repr(self.value)
-
 
 # Class declaration by Nikolay Melnik
 class Data(object):
@@ -291,10 +304,8 @@ class Data(object):
 
     db_info = ['localhost', '3306','pytester', 'password', 'py_final_project']
     """
-    MySQL credentials: ('host', 'port', 'user', 'passwd', 'db')
+    MySQL credentials: ('host', 'port', 'user', 'passwd', 'db schema')
     """
-
-
 
     #Loading CSV file by Nikolay Melnik. TESTED
     def tunas_loader(x=''):
@@ -303,50 +314,40 @@ class Data(object):
         transfers it into list (array) of Tunas
         :param: String having a full filepath to CSV file
         :type: str
-        :return: None. The array is put into class variable Data.tunas[]
+        :return: int of error or success: 0 - ok, 1- IOError, 2 - error - data corrupted. The array is put into class variable Data.tunas[]
+        :rtype: int
 
         Method: tunas_loader
         Author: Nikolay Melnik
         Date created: 10/9/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         # Loading file with WITH statement by Nikolay Melnik (abridged!)
+        tunas = []
         try:
-            with open(x) as f:
-                #Primitive int assignment by Nikolay Melnik
+            with open(x, 'r') as f:
+                # CSV sniffer added from https://docs.python.org/2/library/csv.html
+                dialect = csv.Sniffer().sniff(f.read(1024))
+                f.seek(0)
+                reader = csv.reader(f, dialect)
                 count = 0
-                for line in f:
-
-                    # If file has bad zeros - 0x00 or bad characters above 0x80. We need to get rid of them as well as from \n and "
-                    a = ""
-                    #Decision structures by Nikolay Melnik
-                    for x in line:
-                        if x < ' ':
-                            if x != '\t':
-                                continue
-                        elif x >= '\x80':
-                            continue
-                        elif x == '"':
-                            continue
-                        a = a + x
-
-                    # a is clean, do split
-                    b = a.split(',')
+                for x in reader:
+                    temp = []
+                    for z in x:
+                        # ASCII filter from https://stackoverflow.com/questions/40872126/python-replace-non-ascii-character-in-string/40872225
+                        z = re.sub(r'[^\x20-\x7f]',r'', z)
+                        z = z.replace('"','')
+                        temp.append(z)
 
                     # Are we processing correct file?
                     if count == 0:
-                        if (b[1] != 'GEO') or (b[2] != 'DGUID'):
+                        if (temp[1] != 'GEO') or (temp[2] != 'DGUID'):
                             raise LoadError("Data set is corrupted or not specified")
 
-                    #If it is the first line combine together columns 5 and 6
-                    if count > 0:
-                        b[5] = b[5] + ',' + b[6]
-                        b.pop(6)
-
-                    # if a contains 16 elements, we are good, if not, do next
-                    if len(b) != 16:
-                        continue
+                    # if a contains 16 elements, we are good, if not, rise exception
+                    if len(temp) != 16:
+                        raise LoadError("Data set is corrupted or not specified")
 
                     #Math by Nikolay Melnik
                     count = count + 1
@@ -354,24 +355,28 @@ class Data(object):
                     # Create Tuna object by Nikolay Melnik
                     tuna = Tuna()
                     # Using object's methods by Nikolay Melnik
-                    tuna.setTunaFeatures(b)
-                    # Access class variables by Nikolay Melnik
-                    Data.tunas.append(tuna)
+                    tuna.setTunaFeatures(temp)
+                    tunas.append(tuna)
 
         except IOError:
-            messagebox.showerror("FILE READING ERROR",
-                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
-            return
+            # If loading failed
+            return 1
         except LoadError:
-            messagebox.showerror("FILE READING ERROR",
-                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
-            return
-        messagebox.showinfo("LOAD SUCCESS", "Your File was successfully loaded\nPlease press OK to continue")
-        Data.tunasHeader = Data.tunas[0]
+            # If data corrupted
+            return 2
+        except Error:
+            # If unknown data type
+            return 2
+        # If all ok - continue
+        Data.tunas = tunas
+        Data.tunasHeader = tunas[0]
         Data.tunas.pop(0)
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        # If all ok
+        return 0
+
 
     #Saving tunas to CSV by Nikolay Melnik. TESTED
     @staticmethod
@@ -380,50 +385,32 @@ class Data(object):
         Saving Tunas into a CSV file according to the given path
         :param: String having a full filepath to CSV file
         :type: str
-        :return: None
+        :return: Int value of error or success: 0 - all ok, 1 - error during saving
+        :rtype: int
 
         Method: tunas_saver
         Author: Nikolay Melnik
         Date created: 10/9/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
-
-        def compactor(y=Tuna):
-            """
-            Nested method takes Tuna and returns a String of CSV coded Tuna
-            :param y: Tuna object to be compacted into CSV style
-            :return: String of CSV Tuna
-            """
-            line = ""
-            t = y.getTunaFeatures
-            # Local variable introduction by Nikolay Melnik
-            count = 0
-            for z in t:
-                line = line + z
-                if count < 15:
-                    line = line + ','
-                # Variable participating in calculation by Nikolay Melnik
-                count = count + 1
-            line = line + '\n'
-            return line
-
-        #Open file for processing. Some ideas are form here https://www.w3schools.com/python/python_file_write.asp
+        #Open file for processing. Some ideas are form here https://www.pythonforbeginners.com/csv/using-the-csv-module-in-python
         # Simple file writing and exception handling by Nikolay Melnik
         try:
-            f = open(name, "w")
-            f.write(compactor(Data.tunasHeader))
+            f = open(name, "w", newline='')
+            writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+            writer.writerow(['REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
+                        'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED',
+                        'DECIMALS'])
             for tuna in Data.tunas:
-                f.write(compactor(tuna))
-        except IOError:
-            messagebox.showerror("FILE SAVING ERROR",
-                                 "There was an ERROR during saving\nPlease press OK and repeat saving")
-            return
+                writer.writerow(tuna.getTunaFeatures)
+        except IOError as error:
+            return 1
         finally:
             # If variable 'f' - file exists, close it
             if 'f' in locals():
                 f.close()
-        messagebox.showinfo("SAVING SUCCESS", "Your File was successfully saved\nPlease press OK to continue")
+        return 0
 
     # CSV array analyzer by Nikolay Melnik. TESTED
     @staticmethod
@@ -477,12 +464,13 @@ class Data(object):
         """
         Method creates table 'records' in database from Data.db_info (by default - py_final_project)
         May show GUI error in case of error
-        :return: None. Table created in DB
+        :return: int 0 - all ok, 1 -error. Table created in DB
+        :rtype: int
 
         Method: db_create_table
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         try:
@@ -499,24 +487,29 @@ class Data(object):
             mycursor.execute(sql)
             # Creating new table
             sql = 'CREATE TABLE records ('
-            #Getting list of header info
-            x = Data.tunasHeader.getTunaFeatures
+            #header info
+            x = ['REF_DATE', 'GEO', 'DGUID', 'FOODCATEGORIES', 'COMMODITY', 'UOM', 'UOM_ID',
+                        'SCALAR_FACTOR', 'SCALAR_ID', 'VECTOR', 'COORDINATE', 'VALUE', 'STATUS', 'SYMBOL', 'TERMINATED',
+                        'DECIMALS']
             count = 0
             for y in x:
-                sql = sql+'`'+y+'`'+' VARCHAR(50)'
+                sql = sql+'`'+y+'`'+' VARCHAR(100)'
                 # add comma if not the last block
                 if count <15:
                     sql = sql + ','
                 count = count + 1
             sql = sql + ')'
             mycursor.execute(sql)
-            mycursor.close()
-            mydb.close()
+            mydb.commit()
+            return 0
         except (Exception) as error:
-            messagebox.showerror("MySQL SAVING ERROR",
-                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
-            mycursor.close()
-            mydb.close()
+            return 1
+        finally:
+            # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
+            if 'mycursor' in locals():
+                mycursor.close()
+            if 'mydb' in locals():
+                mydb.close()
 
     #Save tunas in DB. TESTED
     # ideas from here https://www.w3schools.com/python/python_mysql_insert.asp
@@ -524,12 +517,13 @@ class Data(object):
         """
         Method saves current tunas into MySQL 'records' DB.
         May show GUI error in case of error
-        :return: None
+        :return: int 0 - all ok, 1 - error
+        :rtype: int
 
         Method: save_tunas_in_db
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
         # Open DB
@@ -549,14 +543,15 @@ class Data(object):
                 mycursor.execute(sql, val)
             # Commit transaction
             mydb.commit()
-            # print(mycursor.rowcount, "record inserted.")
-            mycursor.close()
-            mydb.close()
+            return 0
         except Exception as error:
-            messagebox.showerror("MySQL SAVING ERROR",
-                                 "There was an ERROR during saving into DB\nPlease press OK and repeat saving")
-            mycursor.close()
-            mydb.close()
+            return 1
+        finally:
+            # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
+            if 'mycursor' in locals():
+                mycursor.close()
+            if 'mydb' in locals():
+                mydb.close()
 
     # Tunas loader from DB. TESTED
     def read_tunas_from_db(self):
@@ -567,9 +562,10 @@ class Data(object):
         Method: read_tunas_from_db
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 10/25/2018
         Python Version: 3.7
         """
+        tunas = []
         try:
             mydb = mysql.connector.connect(
                 host=Data.db_info[0],
@@ -578,7 +574,6 @@ class Data(object):
                 passwd=Data.db_info[3],
                 database=Data.db_info[4]
             )
-            Data.tunas = []
             mycursor = mydb.cursor()
             #Receive Header names
             tuna = Tuna()
@@ -597,22 +592,24 @@ class Data(object):
             for x in myresult:
                 tuna = Tuna()
                 tuna.setTunaFeatures(list(x))
-                Data.tunas.append(tuna)
-
+                tunas.append(tuna)
         except Exception:
-            messagebox.showerror("MySQL READING ERROR",
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
                                  "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
-            Data.tunas = []
+            return 1
         finally:
             # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
             if 'mycursor' in locals():
                 mycursor.close()
             if 'mydb' in locals():
                 mydb.close()
-
+        # If all ok - continue
+        Data.tunas = tunas
         # Sorting Tunas. Idea is taken from https://andrefsp.wordpress.com/2012/02/27/sorting-object-lists-in-python/
         # and https://stackoverflow.com/questions/4233476/sort-a-list-by-multiple-attributes
+        # Implemented by Nikolay Melnik
         Data.tunas.sort(key=lambda tuna: (tuna.REF_DATE, tuna.COMMODITY))
+        return 0
 
 # Second GUI Starter
 class SecondScreen(object):
@@ -634,6 +631,23 @@ class SecondScreen(object):
     """Class variable responsible for ascending/descending style of treeview
         true - ascending, false - descending        
     """
+
+    def run_clocks(self):
+        """
+        Method shows elapsed program time in seconds. Run as Tkinter thread.
+        Restarts itself every second, synchronize itself with system clock
+        :return: None
+
+        Method: run_clocks
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        # calculate difference from start until now and print it in the Label
+        x = str(int((datetime.datetime.now() - self.clock).total_seconds()))
+        self.timeLabel.set('Program run time:'+x)
+        self.root.after(1, self.run_clocks)
 
     # printing graph data
     def printGraph(self, master):
@@ -686,7 +700,7 @@ class SecondScreen(object):
         ax.grid()
         canvas = FigureCanvasTkAgg(fig, master)
         canvas.draw()
-        canvas.get_tk_widget().grid(row=1, column=0, columnspan=4, pady=10)
+        canvas.get_tk_widget().grid(row=3, column=0, columnspan=4, pady=10)
 
     ### This Block is taken from https://pyinmyeye.blogspot.com/2012/07/tkinter-multi-column-list-demo.html
     ### Adjusted fot This final project
@@ -890,7 +904,15 @@ class SecondScreen(object):
         if filename is None or filename == '':
             # Return if Cancel is pressed
             return
-        Data.tunas_saver(filename)
+        x = Data.tunas_saver(filename)
+        #Printing return messageboxes: 0 - ok, 1 - error
+        if x == 0:
+            messagebox.showinfo("SAVING SUCCESS (by Nikolay Melnik)", "Your File was successfully saved\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("FILE SAVING ERROR (by Nikolay Melnik)",
+                             "There was an ERROR during saving\nPlease press OK and repeat saving")
+            return
+
         # Useless loop for looping demo by Nikolay Melnik
         c = 0
         while c < 5:
@@ -951,9 +973,132 @@ class SecondScreen(object):
         self.list_panel(self.frame_bottom1)
         self.boxes_clear()
 
-    ### Buttons callbacks
+    def save_to_db(self):
+        """
+        Call back method is run when user chooses 'Save to Database' in File menu
+        Does not take any parameters. Does not return any. Saves data into DB and prompts success or failure
+        :return: None
 
-    #Create button pressed
+        Method: save_to_db
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        # Creating table
+        x = Data.db_create_table(self)
+        # Saving to db
+        y = Data.save_tunas_in_db(self)
+        # Check for errors
+        if x == 0 and y == 0:
+            messagebox.showinfo("SAVING SUCCESS (by Nikolay Melnik)", "Your File was successfully saved to Database\nPlease press OK to continue")
+        else:
+            messagebox.showerror("MySQL SAVING ERROR (by Nikolay Melnik)",
+                                 "There was an ERROR during saving to Database\nPlease press OK and repeat saving")
+
+    def load_from_db(self):
+        """
+        Call back method is run when user chooses 'Load from Database' in File menu
+        Does not take any parameters. Does not return any. Loads data from DB as a new data set
+        :return: None
+
+        Method: load_from_db
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        # Loading data from the Database
+        x = Data.read_tunas_from_db(self)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
+                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
+        # If no tunas loaded - exit
+        # if len(Data.tunas) < 1:
+        #     return
+        # Cleaning GUI boxes
+        self.boxes_clear()
+        #Delete all Tunas
+        # Data.tunas = []
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+
+        #Default values for boxes just to make sure that there is no repetition
+        Data.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+    def open_file(self):
+        """
+        Call back method is run when user chooses 'Open File' in File menu
+        Does not take any parameters. Does not return any. Loads data from file as a new data set
+        :return: None
+
+        Method: open_file
+        Author: Nikolay Melnik
+        Date created: 10/25/2018
+        Date last modified: 10/25/2018
+        Python Version: 3.7
+        """
+        # Call filechooser
+        filename = filedialog.askopenfile(filetypes=(("Comma-separated files", "*.csv"), ("All files", "*.*")))
+        if filename is None: return  # Return if Cancel is pressed
+
+        #Load file and process Tunas
+        x = Data.tunas_loader(filename.name)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
+                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        elif x == 2:
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
+                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
+            return
+
+        # # Return if no Tunas loaded
+        # if len(Data.tunas) == 0:
+        #     return
+        # Cleaning GUI boxes
+        self.boxes_clear()
+
+        #Delete all Tunas
+        # Data.tunas = []
+        Data.currentData = {}
+        Data.currentUOM = 'Litres per person, per year'
+        self.keysList = []
+        Data.currentKey = ""
+        self.comm['values'] = self.keysList
+        self.comm.set('')
+
+        #Default values for boxes just to make sure that there is no repetition
+        Data.analyzeTuna()
+        Data.currentUOM = 'Litres per person, per year'
+        Data.currentData = Data.analyzedTunasLitres
+        self.keysList = list(Data.currentData.keys())
+        self.comm['values'] = self.keysList
+        #Printing Graph
+        self.printGraph(self.frame_top)
+        #Refresh List
+        self.list_panel(self.frame_bottom1)
+
+
+    # ********* GUI Buttons callbacks *********
+    #Create button pressed. TESTED
     def create_button(self):
         """
         Call back method when user clicks 'Create new entry' button
@@ -978,7 +1123,7 @@ class SecondScreen(object):
                 raise ValueError
         except ValueError:
             # Entry is wrong, showing error box and exits
-            messagebox.showerror("ENTRY ERROR",
+            messagebox.showerror("ENTRY ERROR (by Nikolay Melnik)",
                                  "REF_DATE must be between 1960 and 2017")
             return
         tu.append('Canada')
@@ -1020,7 +1165,7 @@ class SecondScreen(object):
         #Refresh List
         self.list_panel(self.frame_bottom1)
 
-    #Update Button pressed
+    #Update Button pressed. TESTED
     def update_button(self):
         """
         Call back method when user clicks 'Update entry' button
@@ -1050,7 +1195,7 @@ class SecondScreen(object):
                 raise ValueError
         except ValueError:
             # Entry is wrong, showing error box and exits
-            messagebox.showerror("ENTRY ERROR",
+            messagebox.showerror("ENTRY ERROR (by Nikolay Melnik)",
                                  "REF_DATE must be between 1960 and 2017")
             return
         tu.append('Canada')
@@ -1093,7 +1238,7 @@ class SecondScreen(object):
         #Refresh List
         self.list_panel(self.frame_bottom1)
 
-    #Delete button
+    #Delete button. TESTED
     def button_delete(self):
         """
         Call back method when user clicks 'Delete entry' button
@@ -1136,7 +1281,7 @@ class SecondScreen(object):
         self.list_panel(self.frame_bottom1)
 
     #Second screen Constructor
-    def __init__(self):
+    def __init__(self, master):
         """
         This constructor is responsible for creation of the second window GUI. It creates windows,
         pack them with widgets and assigns call back functions
@@ -1147,8 +1292,7 @@ class SecondScreen(object):
         Date last modified: 10/18/2018
         Python Version: 3.7
         """
-
-        self.root = Tk()
+        self.root = master
         #Adding file menu. Taken from https://www.lynda.com/MyPlaylist/Watch/15528494/184095?autoplay=true
         self.root.option_add('*tearOff', False)
         menubar = Menu(self.root)
@@ -1157,13 +1301,17 @@ class SecondScreen(object):
         menubar.add_cascade(menu=file, label='File')
         file.add_command(label='New File', command=self.new_file)
         file.add_separator()
+        file.add_command(label='Open File', command=self.open_file)
         file.add_command(label='Save File', command=self.save_file_button)
+        file.add_separator()
+        file.add_command(label='Load from Database', command=self.load_from_db)
+        file.add_command(label='Save to Database', command=self.save_to_db)
         file.add_separator()
         file.add_command(label='Exit', command=lambda: self.root.destroy())
 
         # Second screen styling
-        # Not resizable screen
-        self.root.resizable(False, False)
+        # Not resizable screen - resizeable only horizontally
+        self.root.resizable(True, False)
         self.root.geometry('1500x1000+150+0')
         self.root.title('CST8333_FinalProject by Nikolay Melnik')
         self.style = ttk.Style()
@@ -1178,16 +1326,16 @@ class SecondScreen(object):
         Data.analyzeTuna()
         Data.currentUOM = 'Litres per person, per year'
         Data.currentData = Data.analyzedTunasLitres
+        # Set data for graphs and comboboxes
         self.keysList = list(Data.currentData.keys())
-        Data.currentKey = self.keysList[0]
 
-        #Printing Graph
-        self.printGraph(self.frame_top)
-
-        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=0, column=0, columnspan=4, pady=5)
-        ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=2, column=0, columnspan=4, pady=10)
-        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=3, column=2, sticky="w",pady=10)
-        ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=3, column=0, sticky="w", pady=10)
+        self.timeLabel = StringVar()
+        self.timeLabel.set('Program run time:0000')
+        ttk.Label(self.frame_top, textvariable=self.timeLabel).grid(row=0, column=0, columnspan=4, pady=5)
+        ttk.Label(self.frame_top, text='Time line graphical representation').grid(row=2, column=0, columnspan=4, pady=5)
+        ttk.Label(self.frame_top, text='Shows available food, NOT ajusted for losses').grid(row=4, column=0, columnspan=4, pady=10)
+        ttk.Label(self.frame_top, text='Choose food for the graph: ').grid(row=5, column=2, sticky="w",pady=10)
+        ttk.Label(self.frame_top, text='Choose UOM: ').grid(row=5, column=0, sticky="w", pady=10)
 
 
         #Callback method for UOM box
@@ -1233,7 +1381,7 @@ class SecondScreen(object):
         self.choice.state(['readonly'])
         self.choice.bind('<<ComboboxSelected>>', changeUOM)
         self.choice.current(0)
-        self.choice.grid(row=3, column=1, sticky="w", pady=10)
+        self.choice.grid(row=5, column=1, sticky="w", pady=10)
 
         #Callback method for Commodity box
         def changeComm(event):
@@ -1258,9 +1406,19 @@ class SecondScreen(object):
         self.comm = ttk.Combobox(self.frame_top, textvariable=keepvalue2, width=60, values=self.keysList)
         self.comm.state(['readonly'])
         self.comm.bind('<<ComboboxSelected>>', changeComm)
-        self.comm.current(0)
-        self.comm.grid(row=3, column=3, sticky="w")
+
+        self.comm['values'] = self.keysList
+        if len(self.keysList) < 1:
+            self.comm.set('')
+        else:
+            self.comm.current(0)
+
+        #self.comm.current(0)
+        self.comm.grid(row=5, column=3, sticky="w")
         # x= list(Data.analyzedTunasLitres.keys())
+        #Printing Graph
+        Data.currentKey = self.comm.get()
+        self.printGraph(self.frame_top)
 
         #Second Part of the screen, 2nd frame Constructing
         # Forming Top Frame
@@ -1360,12 +1518,18 @@ class SecondScreen(object):
 
         ### Buttons
         ttk.Label(self.frame_bottom5, text='           ').pack(side=LEFT, pady=10)
-        ttk.Button(self.frame_bottom5, text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
-        ttk.Button(self.frame_bottom5, text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
-        ttk.Button(self.frame_bottom5, text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_create', text="Create New Entry", command=self.create_button).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_update', text="Update Entry", command=self.update_button).pack(side=LEFT, pady=5, padx=10)
+        ttk.Button(self.frame_bottom5, name='but_delete', text="Delete Entry", command=self.button_delete).pack(side=LEFT, pady=5, padx=10)
 
         #Show treeview on screen
         self.list_panel(self.frame_bottom1)
+
+        #Initializing timer
+        #Taking current system time
+        self.clock = datetime.datetime.now()
+        self.run_clocks()
+
 
 # First GUI Starter
 class FirstScreen(object):
@@ -1434,16 +1598,28 @@ class FirstScreen(object):
         if filename is None: return  # Return if Cancel is pressed
 
         #Load file and process Tunas
-        Data.tunas_loader(filename.name)
+        x = Data.tunas_loader(filename.name)
+        #Throwing messages according to returned results: 0 -ok, 1 - load error, 2 - corrupted file
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x ==1:
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
+                                 "There was an ERROR during loading\nPlease press OK and repeat loading")
+            return
+        elif x ==2:
+            messagebox.showerror("FILE READING ERROR (by Nikolay Melnik)",
+                                 "Data set is corrupted or not specified\nPlease press OK and repeat loading")
+            return
 
-        # Return if no Tunas loaded
+# Return if no Tunas loaded
         if len(Data.tunas) == 0:
             return
 
         # Destroying window
         self.master.destroy()
         #Call for second screen
-        SecondScreen()
+        root = Tk()
+        SecondScreen(root)
 
     def secondButton(self):
         """
@@ -1459,14 +1635,20 @@ class FirstScreen(object):
         """
         # print('Button 2 pressed')
         # Loading data from the Database
-        Data.read_tunas_from_db(self)
+        x = Data.read_tunas_from_db(self)
+        if x == 0:
+            messagebox.showinfo("LOAD SUCCESS (by Nikolay Melnik)", "Your File was successfully loaded\nPlease press OK to continue")
+        elif x == 1:
+            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
+                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
         # If no tunas loaded - exit
         if len(Data.tunas) < 1:
             return
         # Destroying window
         self.master.destroy()
         #Call for second screen
-        SecondScreen()
+        root = Tk()
+        SecondScreen(root)
 
     def thirdButton(self):
         """
@@ -1482,9 +1664,6 @@ class FirstScreen(object):
         """
 
         self.master.destroy()
-        # print('Button 3 pressed')
-
-
 
 ### Major function
 def main():
