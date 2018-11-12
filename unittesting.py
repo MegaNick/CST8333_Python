@@ -321,7 +321,8 @@ class TestTuna(unittest.TestCase):
         tuna5 = Tuna('1970', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
                      'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '100', '', '', '', '2')
         # Populating
-        Data.tunas = [tuna, tuna1, tuna2, tuna3, tuna4, tuna5]
+        # Data.tunas = [tuna, tuna1, tuna2, tuna3, tuna4, tuna5]
+        Data.tunas = [tuna5, tuna4, tuna3, tuna2, tuna1, tuna]
         # Creating table
         Data.db_create_table(self)
         Data.save_tunas_in_db(self)

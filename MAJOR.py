@@ -305,6 +305,7 @@ class Data(object):
     db_info = ['localhost', '3306','pytester', 'password', 'py_final_project']
     """
     MySQL credentials: ('host', 'port', 'user', 'passwd', 'db schema')
+    By Nikolay Melnik
     """
 
     #Loading CSV file by Nikolay Melnik. TESTED
@@ -1477,7 +1478,7 @@ class SecondScreen(object):
         #Scalar Factor Combo box
         fscal = StringVar()
         scallist = fscal.get()
-        self.scal_sel = ttk.Combobox(self.frame_bottom3, textvariable=scallist, width=10, values=['Units', 'Thousands'])
+        self.scal_sel = ttk.Combobox(self.frame_bottom3, textvariable=scallist, width=10, values=['units', 'thousands'])
         self.scal_sel.state(['readonly'])
         #### self.comm.bind('<<ComboboxSelected>>', changeComm)
         self.scal_sel.current(0)
@@ -1525,7 +1526,7 @@ class SecondScreen(object):
         #Show treeview on screen
         self.list_panel(self.frame_bottom1)
 
-        #Initializing timer
+        #Initializing timer by Nikolay Melnik
         #Taking current system time
         self.clock = datetime.datetime.now()
         self.run_clocks()
