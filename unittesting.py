@@ -6,7 +6,6 @@
     Works with major module - MAJOR.py by Nikolay Melnik
     Ottawa, ON Canada. September-December 2018
 """
-import tkinter
 
 """
 CST8333 18F (350, 351) Dataset Attribution
@@ -19,6 +18,7 @@ Statistics Canada. (May 30, 2018). Food available in Canada [webpage] Retrieved 
 You need to review the Open Government License which is found here: http://open.canada.ca/en/open-government-licence-canada
 """
 
+import tkinter
 import unittest.mock
 from MAJOR import *
 import os
@@ -26,7 +26,7 @@ import os
 
 class TestTuna(unittest.TestCase):
     """
-    Testing integrity of Tuna Object
+    Testing integrity of the Final Project
     """
 
     counter = 1
@@ -60,30 +60,6 @@ class TestTuna(unittest.TestCase):
         Python Version: 3.7
         """
         print('Finished. Tests prepared by Nikolay Melnik')
-
-    def test_classes(self):
-        """
-        Test methods checks two classes FirstScreen and SecondScreen for integrity. Creates them and checks for null
-        :return: None
-
-        Test Method: test_classes
-        Author: Nikolay Melnik
-        Date created: 10/26/2018
-        Date last modified: 10/26/2018
-        Python Version: 3.7
-        """
-        self.root = tkinter.Tk()
-        x = FirstScreen(self.root)
-        self.assertIsNotNone(x)
-        if self.root:
-            self.root.destroy()
-        x = None
-        self.root = tkinter.Tk()
-        y = SecondScreen(self.root)
-        self.assertIsNotNone(y)
-        if self.root:
-            self.root.destroy()
-        y = None
 
     def test_Tuna(self):
         """
@@ -152,7 +128,7 @@ class TestTuna(unittest.TestCase):
         Test Method: test_save_load
         Author: Nikolay Melnik
         Date created: 10/13/2018
-        Date last modified: 10/14/2018
+        Date last modified: 11/21/2018
         Python Version: 3.7
         """
         # Path for file
@@ -174,17 +150,14 @@ class TestTuna(unittest.TestCase):
         Data.tunas = []
         Data.tunas.append(x)
         #Saving file
-        self.assertEqual(Data.tunas_saver(path),0)
+        self.assertEqual(Data.tunas_saver(path),0)  # No errors during save
 
         #Checking loading
         Data.tunasHeader = Tuna()
         Data.tunas = []
-        self.assertEqual(Data.tunas_loader(path),0)
-        x = Data.tunas[0]
-        z = x.getTunaFeatures
-        #Check 2 arrays at once https://stackoverflow.com/questions/1663807/how-to-iterate-through-two-lists-in-parallel
-        for x, y in zip (z, array2):
-             self.assertEqual(x, y)
+        self.assertEqual(Data.tunas_loader(path),0)  # No errors during load
+        z = Data.tunas[0].getTunaFeatures
+        self.assertEqual(z, array2)
         os.remove(path)
 
     # Testing analyzeTuna
@@ -201,7 +174,7 @@ class TestTuna(unittest.TestCase):
         """
         # Creating Tunas
         tuna = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
-                    'zzz', 'Units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
+                    'zzz', 'units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
         tuna1 = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
                      'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '300', '', '', '', '2')
         tuna2 = Tuna('1965', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
@@ -272,12 +245,12 @@ class TestTuna(unittest.TestCase):
         Test Method: test_save_tunas_in_db
         Author: Nikolay Melnik
         Date created: 10/14/2018
-        Date last modified: 10/14/2018
+        Date last modified: 11/21/2018
         Python Version: 3.7
         """
         #Creating tuna
         tuna = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
-                    'zzz', 'Units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
+                    'zzz', 'units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
         # inserting into Data.tunas
         Data.tunas = [tuna]
         # Creating table
@@ -286,9 +259,7 @@ class TestTuna(unittest.TestCase):
         Data.read_tunas_from_db(self)
         x = tuna.getTunaFeatures
         y = Data.tunas[0].getTunaFeatures
-        for z in range(0,16):
-            self.assertEqual(x[z], y[z])
-
+        self.assertEqual(x, y)
 
     #Testing reading Tunas from DB
     def test_read_tunas_from_db(self):
@@ -309,7 +280,7 @@ class TestTuna(unittest.TestCase):
         Data.tunasHeader = tuna
         #Other tunas
         tuna = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
-                    'zzz', 'Units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
+                    'zzz', 'units', 'xxx', 'ccc', 'vvv', '10', '', '', '', '2')
         tuna1 = Tuna('1960', 'Canada', '2016A000011124', 'Food available', 'bbb', 'Kilograms per person, per year',
                      'zzz', 'Thousands', 'xxx', 'ccc', 'vvv', '300', '', '', '', '2')
         tuna2 = Tuna('1965', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year',
@@ -335,6 +306,29 @@ class TestTuna(unittest.TestCase):
         self.assertEqual(Data.tunas[4].VALUE, '30')
         self.assertEqual(Data.tunas[5].VALUE, '100')
 
+    def test_classes(self):
+        """
+        Test methods checks two classes FirstScreen and SecondScreen for integrity. Creates them and checks for null
+        :return: None
+
+        Test Method: test_classes
+        Author: Nikolay Melnik
+        Date created: 10/26/2018
+        Date last modified: 10/26/2018
+        Python Version: 3.7
+        """
+        self.root = tkinter.Tk()
+        x = FirstScreen(self.root)
+        self.assertIsNotNone(x)
+        if self.root:
+            self.root.destroy()
+        x = None
+        self.root = tkinter.Tk()
+        y = SecondScreen(self.root)
+        self.assertIsNotNone(y)
+        if self.root:
+            self.root.destroy()
+        y = None
 
     def populate_gui(self):
         """
@@ -370,7 +364,7 @@ class TestTuna(unittest.TestCase):
         s.en_decimals.set('iii')
         # The same thing in array
         array = ['1960', 'Canada', '2016A000011124', 'Food available', 'test', 'Litres per person, per year', 'aaa',
-                 'Units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
+                 'units', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii']
         #Returns Tuple of (Tkinter root, Second screen class, array of model)
         return (self.root, s, array)
 
@@ -476,7 +470,7 @@ class TestTuna(unittest.TestCase):
         s.en_decimals.set('jjj')
         # The same thing in array
         array = ['1961', 'Canada', '2016A000011124', 'Food available', 'aaa', 'Litres per person, per year', 'bbb',
-                 'Units', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj']
+                 'units', 'ccc', 'ddd', 'eee', 'fff', 'ggg', 'hhh', 'iii', 'jjj']
         # "Press" Update entry button
         s.frame_bottom5.children['but_update'].invoke()
         z = Data.tunas[0].getTunaFeatures

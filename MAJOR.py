@@ -595,8 +595,8 @@ class Data(object):
                 tuna.setTunaFeatures(list(x))
                 tunas.append(tuna)
         except Exception:
-            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
-                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
+            # messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
+            #                      "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
             return 1
         finally:
             # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
