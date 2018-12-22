@@ -2,12 +2,15 @@
 # CST8333 Project by Nikolay Melnik
 # The author used www.lynda.com cycle of lectures about Tkinter - https://www.lynda.com/MyPlaylist/Watch/15528494/184085?autoplay=true
 # as an inspiration and major source of ideas for this particular project.
+#
+# This file has A LOT of strange methods headers. My name appears here a thousand times not because of my pride, this is done by the request of the professor Stanley Pieda
+
 """ CST8333_Final_Project by Nikolay Melnik
     Major module program as a partial fulfillment of the CST8333 course.
-    Ottawa, ON Canada. September-December 2018
+    Algonquin College. Ottawa, ON Canada. September-December 2018
 """
 __version__ = "1.5"
-__author__ = "Nikolay Melnik (id-040874855)"
+__author__ = "Nikolay Melnik (id-040xxxxxx)"
 
 """
 CST8333 18F (350, 351) Dataset Attribution
@@ -595,8 +598,8 @@ class Data(object):
                 tuna.setTunaFeatures(list(x))
                 tunas.append(tuna)
         except Exception:
-            messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
-                                 "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
+            # messagebox.showerror("MySQL READING ERROR (by Nikolay Melnik)",
+            #                      "There was an ERROR during loading from DB\nPlease press OK and repeat loading")
             return 1
         finally:
             # Checking variable for existance https://stackoverflow.com/questions/843277/how-do-i-check-if-a-variable-exists
